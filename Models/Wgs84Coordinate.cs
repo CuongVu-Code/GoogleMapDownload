@@ -29,9 +29,6 @@ namespace GoogleMapPlugin.Models
                 Longitude.ToString("0.0000000000") +
                 ", Latitude = " +
                 Latitude.ToString("0.0000000000");
-
-
-
         }
     }
 }
