@@ -41,6 +41,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -54,7 +56,9 @@
     <Compile Include="Models\GoogleTileRange.cs" />
     <Compile Include="Models\KinhTuyenTruc.cs" />
     <Compile Include="Models\Wgs84Coordinate.cs" />
-    <Compile Include="Palette\GoogleMapControl.cs" />
+    <Compile Include="Palette\GoogleMapControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="Palette\GoogleMapControl.Designer.cs">
       <DependentUpon>GoogleMapControl.cs</DependentUpon>
     </Compile>

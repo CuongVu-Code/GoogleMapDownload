@@ -562,7 +562,8 @@ namespace GoogleMapPlugin
             Wgs84Coordinate result = service.ToWgs84(574108.652052,2363981.765218,105.0);
             MessageBox.Show("VN2000\n\n" +"X = 574108.652052\n" +"Y = 2363981.765218\n" +"KTT = 105.000000°\n\n" +"WGS84\n\n" +"Longitude = " + result.Longitude.ToString("0.000000000000") +"\nLatitude = " + result.Latitude.ToString("0.000000000000"),"TEST VN2000 → WGS84");
         }
-        //HÀM KIỂM TRA GOOGLE TILE        private void TestGoogleTile()
+        //HÀM KIỂM TRA GOOGLE TILE
+        private void TestGoogleTile()
         {
             GoogleTileService service = new GoogleTileService();
             double longitude =105.716500243568;
