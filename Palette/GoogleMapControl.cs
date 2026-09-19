@@ -406,11 +406,12 @@ namespace GoogleMapPlugin
 
             panel.Controls.Add(numZoom);
 
-            y += 50;
+            
             //ADD LABLE PROGRESS
             labelProgress= new Label();
-            labelProgress.Location=new Point(10, y+5);
+            labelProgress.Location=new Point(125, y);
             panel.Controls.Add(labelProgress);
+            y += 50;
             // =================================
             // DOWNLOAD
             // =================================
@@ -480,7 +481,7 @@ namespace GoogleMapPlugin
 
         private void BtnDownload_Click(object sender, EventArgs e)
         {
-            TestDownloadTiles();
+            StartTileDownload();
         }
         // =====================================
         // CHỌN ĐIỂM 1
