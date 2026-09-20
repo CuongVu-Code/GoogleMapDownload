@@ -12,8 +12,9 @@ using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace GoogleMapPlugin{
-    
+namespace GoogleMapPlugin
+{
+
     public partial class GoogleMapControl : UserControl
     {
         private class TileDownloadTestState
@@ -59,11 +60,11 @@ namespace GoogleMapPlugin{
         // ==============================
         // BUTTON
         // ==============================
-        private Label  labelProgress;
+        private Label labelProgress;
         private Button btnDownload;
         private Button btnDelete;
         private Button btnCheck;
-        private Button btnCheck1;        
+        private Button btnCheck1;
         // ==============================
         // CONSTRUCTOR
         // ==============================
@@ -89,8 +90,8 @@ namespace GoogleMapPlugin{
             lblTitle.Dock = DockStyle.Top;
             lblTitle.Height = 40;
             lblTitle.TextAlign = ContentAlignment.MiddleCenter;
-            lblTitle.Font = new Font("Arial",10,FontStyle.Bold);
-            this.Controls.Add(lblTitle);            
+            lblTitle.Font = new Font("Arial", 10, FontStyle.Bold);
+            this.Controls.Add(lblTitle);
             // =================================
             // PANEL
             // =================================
@@ -105,9 +106,9 @@ namespace GoogleMapPlugin{
             lblPoint1 = new Label();
             //string st = r + "";
             lblPoint1.Text = "ĐIỂM 1";
-            lblPoint1.Location =  new Point(10, y);
+            lblPoint1.Location = new Point(10, y);
             lblPoint1.AutoSize = true;
-            lblPoint1.Font = new Font("Arial",9, FontStyle.Bold);
+            lblPoint1.Font = new Font("Arial", 9, FontStyle.Bold);
             panel.Controls.Add(lblPoint1);
             y += 30;
             // X1
@@ -147,7 +148,7 @@ namespace GoogleMapPlugin{
             lblPoint2.Text = "ĐIỂM 2";
             lblPoint2.Location = new Point(10, y);
             lblPoint2.AutoSize = true;
-            lblPoint2.Font = new Font("Arial",9,FontStyle.Bold);
+            lblPoint2.Font = new Font("Arial", 9, FontStyle.Bold);
             panel.Controls.Add(lblPoint2);
             y += 30;
             // X2
@@ -220,7 +221,7 @@ namespace GoogleMapPlugin{
             // =================================
             lblZoom = new Label();
             lblZoom.Text = "Google Zoom:";
-            lblZoom.Location =new Point(10, y);
+            lblZoom.Location = new Point(10, y);
             lblZoom.AutoSize = true;
             panel.Controls.Add(lblZoom);
             y += 25;
@@ -230,10 +231,10 @@ namespace GoogleMapPlugin{
             numZoom.Minimum = 1;
             numZoom.Maximum = 21;
             numZoom.Value = 17;
-            panel.Controls.Add(numZoom);            
+            panel.Controls.Add(numZoom);
             //ADD LABLE PROGRESS
-            labelProgress= new Label();
-            labelProgress.Location=new Point(125, y);
+            labelProgress = new Label();
+            labelProgress.Location = new Point(125, y);
             panel.Controls.Add(labelProgress);
             y += 50;
             // =================================
@@ -264,7 +265,7 @@ namespace GoogleMapPlugin{
             btnCheck.Location = new Point(10, y + 45);
             btnCheck.Width = 125;//170;
             btnCheck.Click += BtnCheck_Click;
-            panel.Controls.Add(btnCheck);        
+            panel.Controls.Add(btnCheck);
             // =================================
             // TEST1
             // =================================
@@ -277,7 +278,8 @@ namespace GoogleMapPlugin{
         }
         private void BtnDownload_Click(object sender, EventArgs e)
         {
-            StartTileDownload();
+            //StartTileDownload();
+            TestRequest();
         }
         // =====================================
         // CHỌN ĐIỂM 1
@@ -300,9 +302,9 @@ namespace GoogleMapPlugin{
         // =====================================
         // CHỌN ĐIỂM 2
         // =====================================
-        private void BtnPick2_Click(object sender,EventArgs e)
+        private void BtnPick2_Click(object sender, EventArgs e)
         {
-            Document doc =Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
             if (doc == null)
                 return;
             Editor ed = doc.Editor;
@@ -311,9 +313,9 @@ namespace GoogleMapPlugin{
             // =========================================
             double x1;
             double y1;
-            if (!double.TryParse(txtX1.Text, out x1) ||!double.TryParse(txtY1.Text, out y1))
+            if (!double.TryParse(txtX1.Text, out x1) || !double.TryParse(txtY1.Text, out y1))
             {
-                MessageBox.Show("Bạn hãy chọn điểm 1 trước.","Google Map",MessageBoxButtons.OK,MessageBoxIcon.Warning);
+                MessageBox.Show("Bạn hãy chọn điểm 1 trước.", "Google Map", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             Point3d p1 = new Point3d(x1, y1, 0.0);
@@ -332,12 +334,12 @@ namespace GoogleMapPlugin{
             }
         }
         //Nút test
-        private void BtnCheck_Click(object sender,EventArgs e)
+        private void BtnCheck_Click(object sender, EventArgs e)
         {
             //TestCoordinate();
             TestTileList();
         }
-        private void BtnCheck1_Click(object sender,EventArgs e)
+        private void BtnCheck1_Click(object sender, EventArgs e)
         {
             //TestGoogleTile();
             TestDownloadTile();
@@ -353,27 +355,27 @@ namespace GoogleMapPlugin{
         private void TestCoordinate() //Ham test Toa do
         {
             CoordinateService service = new CoordinateService();
-            Wgs84Coordinate result = service.ToWgs84(574108.652052,2363981.765218,105.0);
-            MessageBox.Show("VN2000\n\n" +"X = 574108.652052\n" +"Y = 2363981.765218\n" +"KTT = 105.000000°\n\n" +"WGS84\n\n" +"Longitude = " + result.Longitude.ToString("0.000000000000") +"\nLatitude = " + result.Latitude.ToString("0.000000000000"),"TEST VN2000 → WGS84");
+            Wgs84Coordinate result = service.ToWgs84(574108.652052, 2363981.765218, 105.0);
+            MessageBox.Show("VN2000\n\n" + "X = 574108.652052\n" + "Y = 2363981.765218\n" + "KTT = 105.000000°\n\n" + "WGS84\n\n" + "Longitude = " + result.Longitude.ToString("0.000000000000") + "\nLatitude = " + result.Latitude.ToString("0.000000000000"), "TEST VN2000 → WGS84");
         }
         //HÀM KIỂM TRA GOOGLE TILE
         private void TestGoogleTile()
         {
             GoogleTileService service = new GoogleTileService();
-            double longitude =105.716500243568;
+            double longitude = 105.716500243568;
             double latitude = 21.369075499011;
             int zoom = 17;
-            GoogleTileCoordinate result = service.LatLonToTile(latitude,longitude,zoom);
+            GoogleTileCoordinate result = service.LatLonToTile(latitude, longitude, zoom);
             MessageBox.Show(
                 "WGS84\n\n" +
                 "Longitude = " + longitude.ToString("0.000000000000") +
-                "\nLatitude = " +latitude.ToString("0.000000000000") +
+                "\nLatitude = " + latitude.ToString("0.000000000000") +
                 "\n\nZoom = " + zoom +
                 "\n\nGoogle Tile\n\n" +
                 "Tile X = " + result.TileX +
                 "\nTile Y = " + result.TileY +
                 "\n\nGlobal Pixel\n\n" +
-                "Pixel X = " +result.PixelX.ToString("0.000000") +
+                "Pixel X = " + result.PixelX.ToString("0.000000") +
                 "\nPixel Y = " + result.PixelY.ToString("0.000000"),
                 "TEST WGS84 → GOOGLE TILE");
         }
@@ -385,14 +387,14 @@ namespace GoogleMapPlugin{
             int tileY = 57568;
             int zoom = 17;
             string layer = service.GetLayer("satellite");
-            byte[] data =  service.DownloadTile(tileX,tileY,zoom,layer);
+            byte[] data = service.DownloadTile(tileX, tileY, zoom, layer);
             if (data == null)
             {
-                MessageBox.Show("Tải tile thất bại.","TEST TILE");
+                MessageBox.Show("Tải tile thất bại.", "TEST TILE");
                 return;
             }
             string file = @"C:\GoogleMap\test_tile.jpg";
-            File.WriteAllBytes(file,data);
+            File.WriteAllBytes(file, data);
             MessageBox.Show(
                 "Tải tile thành công!\n\n" +
                 "Tile X = " + tileX + "\n" +
@@ -401,7 +403,7 @@ namespace GoogleMapPlugin{
                 "Layer = " + layer + "\n\n" +
                 "File:\n" + file,
                 "TEST DOWNLOAD TILE");
-        }        
+        }
         private void TestTileList()
         {
             GoogleTileService service = new GoogleTileService();
@@ -411,7 +413,7 @@ namespace GoogleMapPlugin{
             double lonMin = 105.70;
             double lonMax = 105.72;
             int zoom = 17;
-            GoogleTileRange range = service.GetTileRange(latMin,lonMin,latMax,lonMax,zoom);
+            GoogleTileRange range = service.GetTileRange(latMin, lonMin, latMax, lonMax, zoom);
             List<GoogleTileItem> tiles = service.GetTileList(range);
             string message = "GOOGLE TILE RANGE\n\n" +
                 "Min X = " + range.MinX +
@@ -421,7 +423,7 @@ namespace GoogleMapPlugin{
                 "\n\nWidth = " + range.Width +
                 "\nHeight = " + range.Height +
                 "\nTotal Tiles = " + range.TotalTiles;
-            MessageBox.Show(message,"TEST TILE LIST");
+            MessageBox.Show(message, "TEST TILE LIST");
         }
         ///
         private void TestDownloadTiles()
@@ -431,21 +433,21 @@ namespace GoogleMapPlugin{
             // TEST TILE
             // ---------------------------------------------------------
             List<GoogleTileItem> tiles = new List<GoogleTileItem>();
-            tiles.Add(new GoogleTileItem(104026,57568));
-            tiles.Add(new GoogleTileItem(104027,57568));
-            tiles.Add(new GoogleTileItem(104026,57569));
-            tiles.Add(new GoogleTileItem(104027,57569));
+            tiles.Add(new GoogleTileItem(104026, 57568));
+            tiles.Add(new GoogleTileItem(104027, 57568));
+            tiles.Add(new GoogleTileItem(104026, 57569));
+            tiles.Add(new GoogleTileItem(104027, 57569));
             // ---------------------------------------------------------
             // DOWNLOAD
             // ---------------------------------------------------------
             string layer = service.GetLayer("satellite");
-            List<GoogleTileDownloadResult> results =service.DownloadTilesParallel(tiles,17,layer,8,TileProgress);
+            List<GoogleTileDownloadResult> results = service.DownloadTilesParallel(tiles, 17, layer, 8, TileProgress);
         }
-        private void TileProgress(int completed,int total)
+        private void TileProgress(int completed, int total)
         {
             if (this.InvokeRequired)
             {
-                this.Invoke(new GoogleMapService.TileProgressHandler (TileProgress),new object[] {completed,total});
+                this.Invoke(new GoogleMapService.TileProgressHandler(TileProgress), new object[] { completed, total });
                 return;
             }
             int percent = 0;
@@ -453,7 +455,7 @@ namespace GoogleMapPlugin{
             {
                 percent = completed * 100 / total;
             }
-            labelProgress.Text = "Tile: " + completed +" / " + total +" (" + percent + "%)";
+            labelProgress.Text = "Tile: " + completed + " / " + total + " (" + percent + "%)";
         }
         private void StartTileDownload()
         {
@@ -462,17 +464,17 @@ namespace GoogleMapPlugin{
             // ---------------------------------------------------------
             // TEST 4 TILE
             // ---------------------------------------------------------
-            tiles.Add(new GoogleTileItem(104026,57568));
-            tiles.Add(new GoogleTileItem(104027,57568));
-            tiles.Add(new GoogleTileItem(104026,57569));
-            tiles.Add(new GoogleTileItem(104027,57569));
+            tiles.Add(new GoogleTileItem(104026, 57568));
+            tiles.Add(new GoogleTileItem(104027, 57568));
+            tiles.Add(new GoogleTileItem(104026, 57569));
+            tiles.Add(new GoogleTileItem(104027, 57569));
             string layer = service.GetLayer("satellite");
             TileDownloadTestState state = new TileDownloadTestState();
             state.Service = service;
             state.Tiles = tiles;
             state.Zoom = 17;
             state.Layer = layer;
-            ThreadPool.QueueUserWorkItem(new WaitCallback(DownloadTileTestWorker),state);
+            ThreadPool.QueueUserWorkItem(new WaitCallback(DownloadTileTestWorker), state);
         }
         private void DownloadTileTestWorker(object obj)
         {
@@ -486,25 +488,21 @@ namespace GoogleMapPlugin{
                         8,
                         new GoogleMapService.TileProgressHandler(
                             TileProgress));
-                // -----------------------------------------------------
+                // ===================
                 // ĐẾM TILE THÀNH CÔNG
-                // -----------------------------------------------------
+                // ===================
                 int success = 0;
-
                 int i;
-
-                for (i = 0;
-                     i < results.Count;
-                     i++)
+                for (i = 0;i < results.Count;i++)
                 {
                     if (results[i].Success)
                     {
                         success++;
                     }
                 }
-                // -----------------------------------------------------
+                // ===================
                 // TRỞ VỀ UI THREAD
-                // -----------------------------------------------------
+                // ===================
                 this.BeginInvoke(
                     new MethodInvoker(
                         delegate
@@ -566,6 +564,15 @@ namespace GoogleMapPlugin{
             request.Zoom = Convert.ToInt32(numZoom.Value);
             request.MapType = cmbMapType.SelectedItem.ToString();
             return request;
+        }
+        private void TestRequest()
+        {
+            GoogleMapRequest request = GetRequestFromUI();
+            if (request == null)
+                return;
+            MessageBox.Show("X1 = " + request.X1 + "\nY1 = " + request.Y1 + "\n\nX2 = " + request.X2 +
+                "\nY2 = " + request.Y2 + "\n\nKTT = " + request.KinhTuyenTruc +
+                "\nZoom = " + request.Zoom + "\nMapType = " + request.MapType,"TEST GOOGLE MAP REQUEST");
         }
     }
 }
