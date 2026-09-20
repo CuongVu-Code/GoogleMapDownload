@@ -12,8 +12,7 @@ using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace GoogleMapPlugin
-{
+namespace GoogleMapPlugin{
     
     public partial class GoogleMapControl : UserControl
     {
@@ -30,50 +29,33 @@ namespace GoogleMapPlugin
         private Label lblPoint1;
         private Label lblX1;
         private Label lblY1;
-
         private TextBox txtX1;
         private TextBox txtY1;
-
         private Button btnPick1;
-
         // ==============================
         // ĐIỂM 2
         // ==============================
-
         private Label lblPoint2;
         private Label lblX2;
         private Label lblY2;
-
         private TextBox txtX2;
         private TextBox txtY2;
-
         private Button btnPick2;
-
-
         // ==============================
         // KTT
         // ==============================
-
         private Label lblKTT;
         private ComboBox cmbKTT;
-
-
         // ==============================
         // MAP TYPE
         // ==============================
-
         private Label lblMapType;
         private ComboBox cmbMapType;
-
-
         // ==============================
         // ZOOM
         // ==============================
-
         private Label lblZoom;
         private NumericUpDown numZoom;
-
-
         // ==============================
         // BUTTON
         // ==============================
@@ -81,332 +63,174 @@ namespace GoogleMapPlugin
         private Button btnDownload;
         private Button btnDelete;
         private Button btnCheck;
-        private Button btnCheck1;
-        //private string r;
-
-
+        private Button btnCheck1;        
         // ==============================
         // CONSTRUCTOR
         // ==============================
-
         public GoogleMapControl()
         {
             InitializeControl();
             LoadKinhTuyenTruc();
         }
-
-
         // ==============================
         // KHỞI TẠO GIAO DIỆN
         // ==============================
-
         private void InitializeControl()
         {
-
-
             this.Dock = DockStyle.Fill;
-
             this.BackColor = SystemColors.Control;
-
             this.AutoScroll = true;
-
-
             // =================================
             // TITLE
             // =================================
-
             Label lblTitle = new Label();
-
             lblTitle.Text = "GOOGLE MAP DOWNLOAD" + "\nCopyright by Vũ Lê Cường";
             lblTitle.ForeColor = Color.BlueViolet;
-
             lblTitle.Dock = DockStyle.Top;
-
             lblTitle.Height = 40;
-
-            lblTitle.TextAlign =
-                ContentAlignment.MiddleCenter;
-
-            lblTitle.Font =
-                new Font(
-                    "Arial",
-                    10,
-                    FontStyle.Bold);
-
-            this.Controls.Add(lblTitle);
-            
+            lblTitle.TextAlign = ContentAlignment.MiddleCenter;
+            lblTitle.Font = new Font("Arial",10,FontStyle.Bold);
+            this.Controls.Add(lblTitle);            
             // =================================
             // PANEL
             // =================================
-
             Panel panel = new Panel();
-
             panel.Dock = DockStyle.Fill;
-
             panel.Padding = new Padding(10);
-
             this.Controls.Add(panel);
-
             int y = 50;
-
             // =================================
             // ĐIỂM 1
             // =================================
-
             lblPoint1 = new Label();
             //string st = r + "";
             lblPoint1.Text = "ĐIỂM 1";
-
             lblPoint1.Location =  new Point(10, y);
-
             lblPoint1.AutoSize = true;
-
             lblPoint1.Font = new Font("Arial",9, FontStyle.Bold);
-
             panel.Controls.Add(lblPoint1);
-
             y += 30;
-
-
             // X1
-
             lblX1 = new Label();
-
             lblX1.Text = "X:";
-
             lblX1.Location = new Point(10, y + 3);
-
             lblX1.AutoSize = true;
-
             panel.Controls.Add(lblX1);
-
             txtX1 = new TextBox();
-
             txtX1.Location = new Point(35, y);
-
             txtX1.Width = 235;// 260;// 170;
-
             panel.Controls.Add(txtX1);
-
             y += 30;
-
             // Y1
-
             lblY1 = new Label();
-
             lblY1.Text = "Y:";
-
             lblY1.Location = new Point(10, y + 3);
-
             lblY1.AutoSize = true;
-
             panel.Controls.Add(lblY1);
-
             txtY1 = new TextBox();
-
             txtY1.Location = new Point(35, y);
-
             txtY1.Width = 235;// 260;// 170;
-
             panel.Controls.Add(txtY1);
-
             y += 30;
-
             // BUTTON PICK 1
-
             btnPick1 = new Button();
-
             btnPick1.Text = "CHỌN ĐIỂM 1";
-
-            btnPick1.Location =
-                new Point(35, y);
-
+            btnPick1.Location = new Point(35, y);
             btnPick1.Width = 235;// 170;
-
             btnPick1.Click += BtnPick1_Click;
-
             panel.Controls.Add(btnPick1);
-
             y += 45;
-
             // =================================
             // ĐIỂM 2
             // =================================
-
             lblPoint2 = new Label();
-
             lblPoint2.Text = "ĐIỂM 2";
-
             lblPoint2.Location = new Point(10, y);
-
             lblPoint2.AutoSize = true;
-
             lblPoint2.Font = new Font("Arial",9,FontStyle.Bold);
-
             panel.Controls.Add(lblPoint2);
-
             y += 30;
-
             // X2
-
             lblX2 = new Label();
-
             lblX2.Text = "X:";
-
             lblX2.Location = new Point(10, y + 3);
-
             lblX2.AutoSize = true;
-
             panel.Controls.Add(lblX2);
-
             txtX2 = new TextBox();
-
             txtX2.Location = new Point(35, y);
-
             txtX2.Width = 235;//260;// 170;
-
             panel.Controls.Add(txtX2);
-
             y += 30;
-
             // Y2
-
             lblY2 = new Label();
-
             lblY2.Text = "Y:";
-
             lblY2.Location = new Point(10, y + 3);
-
             lblY2.AutoSize = true;
-
             panel.Controls.Add(lblY2);
-
-
             txtY2 = new TextBox();
-
             txtY2.Location = new Point(35, y);
-
             txtY2.Width = 235;// 260;// 170;
-
             panel.Controls.Add(txtY2);
-
             y += 30;
-
             // BUTTON PICK 2
-
             btnPick2 = new Button();
-
             btnPick2.Text = "CHỌN ĐIỂM 2";
-
             btnPick2.Location = new Point(35, y);
-
             btnPick2.Width = 235;//170;
-
             btnPick2.Click += BtnPick2_Click;
-
             panel.Controls.Add(btnPick2);
-
             y += 50;
-
             // =================================
             // KTT
             // =================================
-
             lblKTT = new Label();
-
             lblKTT.Text = "Kinh tuyến trục:";
-
             lblKTT.Location = new Point(10, y);
-
             lblKTT.AutoSize = true;
-
             panel.Controls.Add(lblKTT);
-
             y += 25;
-
-
             cmbKTT = new ComboBox();
-
             cmbKTT.Location = new Point(10, y);
-
             cmbKTT.Width = 260;
-
             cmbKTT.DropDownStyle = ComboBoxStyle.DropDownList;
-
             panel.Controls.Add(cmbKTT);
-
             y += 45;
-
             // =================================
             // MAP TYPE
             // =================================
-
             lblMapType = new Label();
-
             lblMapType.Text = "Loại bản đồ:";
-
             lblMapType.Location = new Point(10, y);
-
             lblMapType.AutoSize = true;
-
             panel.Controls.Add(lblMapType);
-
             y += 25;
-
-
             cmbMapType = new ComboBox();
-
             cmbMapType.Location = new Point(10, y);
-
             cmbMapType.Width = 260;
-
             cmbMapType.DropDownStyle = ComboBoxStyle.DropDownList;
-
             cmbMapType.Items.Add("Satellite");
-
             cmbMapType.Items.Add("Road");
-
             cmbMapType.Items.Add("Hybrid");
-
             cmbMapType.Items.Add("Terrain");
-
             cmbMapType.SelectedIndex = 0;
-
             panel.Controls.Add(cmbMapType);
-
             y += 45;
-
             // =================================
             // ZOOM
             // =================================
-
             lblZoom = new Label();
-
             lblZoom.Text = "Google Zoom:";
-
             lblZoom.Location =new Point(10, y);
-
             lblZoom.AutoSize = true;
-
             panel.Controls.Add(lblZoom);
-
             y += 25;
-
             numZoom = new NumericUpDown();
-
             numZoom.Location = new Point(10, y);
-
             numZoom.Width = 100;
-
             numZoom.Minimum = 1;
-
             numZoom.Maximum = 21;
-
             numZoom.Value = 17;
-
-            panel.Controls.Add(numZoom);
-
-            
+            panel.Controls.Add(numZoom);            
             //ADD LABLE PROGRESS
             labelProgress= new Label();
             labelProgress.Location=new Point(125, y);
@@ -415,70 +239,42 @@ namespace GoogleMapPlugin
             // =================================
             // DOWNLOAD
             // =================================
-
             btnDownload = new Button();
-
             btnDownload.Text = "TẢI GOOGLE MAP";
-
             btnDownload.Location = new Point(10, y);
-
             btnDownload.Width = 260;
-
             btnDownload.Height = 35;
-
             btnDownload.Click += BtnDownload_Click;
-
             panel.Controls.Add(btnDownload);
-
             y += 45;
-
             // =================================
             // DELETE
             // =================================
-
             btnDelete = new Button();
-
             btnDelete.Text = "XÓA ẢNH";
-
             btnDelete.Location = new Point(10, y);
-
             btnDelete.Width = 260;
-
             btnDelete.Height = 30;
-
             panel.Controls.Add(btnDelete);
-
             // =================================
             // TEST
             // =================================
             btnCheck = new Button();
-
             btnCheck.Text = "GOOGLE CORDINATE";
-
             btnCheck.Location = new Point(10, y + 45);
-
             btnCheck.Width = 125;//170;
-
             btnCheck.Click += BtnCheck_Click;
-
-            panel.Controls.Add(btnCheck);
-        
+            panel.Controls.Add(btnCheck);        
             // =================================
             // TEST1
             // =================================
             btnCheck1 = new Button();
-
             btnCheck1.Text = "GOOGLE TILE";
-
             btnCheck1.Location = new Point(145, y + 45);
-
             btnCheck1.Width = 125;//170;
-
             btnCheck1.Click += BtnCheck1_Click;
-
             panel.Controls.Add(btnCheck1);
         }
-
         private void BtnDownload_Click(object sender, EventArgs e)
         {
             StartTileDownload();
@@ -489,7 +285,6 @@ namespace GoogleMapPlugin
         private void BtnPick1_Click(object sender, EventArgs e)
         {
             Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
             if (doc == null)
                 return;
             Editor ed = doc.Editor;
@@ -508,7 +303,6 @@ namespace GoogleMapPlugin
         private void BtnPick2_Click(object sender,EventArgs e)
         {
             Document doc =Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
             if (doc == null)
                 return;
             Editor ed = doc.Editor;
@@ -520,7 +314,6 @@ namespace GoogleMapPlugin
             if (!double.TryParse(txtX1.Text, out x1) ||!double.TryParse(txtY1.Text, out y1))
             {
                 MessageBox.Show("Bạn hãy chọn điểm 1 trước.","Google Map",MessageBoxButtons.OK,MessageBoxIcon.Warning);
-
                 return;
             }
             Point3d p1 = new Point3d(x1, y1, 0.0);
@@ -737,6 +530,42 @@ namespace GoogleMapPlugin
                                 "Lỗi");
                         }));
             }
+        }
+        private GoogleMapRequest GetRequestFromUI()
+        {
+            double x1;
+            double y1;
+            double x2;
+            double y2;
+            if (!double.TryParse(txtX1.Text, out x1))
+            {
+                MessageBox.Show("Tọa độ X1 không hợp lệ.");
+                return null;
+            }
+            if (!double.TryParse(txtY1.Text, out y1))
+            {
+                MessageBox.Show("Tọa độ Y1 không hợp lệ.");
+                return null;
+            }
+            if (!double.TryParse(txtX2.Text, out x2))
+            {
+                MessageBox.Show("Tọa độ X2 không hợp lệ.");
+                return null;
+            }
+            if (!double.TryParse(txtY2.Text, out y2))
+            {
+                MessageBox.Show("Tọa độ Y2 không hợp lệ.");
+                return null;
+            }
+            GoogleMapRequest request = new GoogleMapRequest();
+            request.X1 = x1;
+            request.Y1 = y1;
+            request.X2 = x2;
+            request.Y2 = y2;
+            request.KinhTuyenTruc = Convert.ToDouble(cmbKTT.SelectedValue);
+            request.Zoom = Convert.ToInt32(numZoom.Value);
+            request.MapType = cmbMapType.SelectedItem.ToString();
+            return request;
         }
     }
 }
