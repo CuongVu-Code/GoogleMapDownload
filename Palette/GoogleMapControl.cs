@@ -276,10 +276,11 @@ namespace GoogleMapPlugin
             btnCheck1.Click += BtnCheck1_Click;
             panel.Controls.Add(btnCheck1);
         }
-        private void BtnDownload_Click(object sender, EventArgs e)
+        private void BtnDownload_Click(object sender, EventArgs e) //Nút Download
         {
             //StartTileDownload();
-            TestRequest();
+            //TestRequestToTile();
+            StartRealTileDownload();
         }
         // =====================================
         // CHỌN ĐIỂM 1
@@ -481,32 +482,35 @@ namespace GoogleMapPlugin
             TileDownloadTestState state = (TileDownloadTestState)obj;
             try
             {
-                List<GoogleTileDownloadResult> results = state.Service.DownloadTilesParallel(
+                List<GoogleTileDownloadResult> results =
+                    state.Service.DownloadTilesParallel(
                         state.Tiles,
                         state.Zoom,
                         state.Layer,
                         8,
                         new GoogleMapService.TileProgressHandler(
                             TileProgress));
-                // ===================
-                // ĐẾM TILE THÀNH CÔNG
-                // ===================
-                int success = 0;
-                int i;
-                for (i = 0;i < results.Count;i++)
-                {
-                    if (results[i].Success)
-                    {
-                        success++;
-                    }
-                }
-                // ===================
+                // -----------------------------------------------------
+                // LƯU TILE VÀO Ổ CỨNG
+                // -----------------------------------------------------
+                GoogleTileFileService fileService = new GoogleTileFileService();
+                string tileFolder = @"C:\GoogleMap\Tiles";
+                int success = fileService.SaveTiles(results,state.Zoom,tileFolder);
+                // -----------------------------------------------------
                 // TRỞ VỀ UI THREAD
-                // ===================
+                // -----------------------------------------------------
                 this.BeginInvoke(
                     new MethodInvoker(
                         delegate
                         {
+                            btnDownload.Enabled = true;
+
+                            labelProgress.Text =
+                                "Hoàn thành: " +
+                                success + "/" +
+                                results.Count +
+                                " tile";
+
                             MessageBox.Show(
                                 "Đã tải xong!\n\n" +
                                 "Tổng tile: " +
@@ -514,7 +518,7 @@ namespace GoogleMapPlugin
                                 "\n" +
                                 "Thành công: " +
                                 success,
-                                "TEST DOWNLOAD TILES");
+                                "GOOGLE MAP");
                         }));
             }
             catch (Exception ex)
@@ -523,9 +527,8 @@ namespace GoogleMapPlugin
                     new MethodInvoker(
                         delegate
                         {
-                            MessageBox.Show(
-                                ex.Message,
-                                "Lỗi");
+                            btnDownload.Enabled = true;
+                            MessageBox.Show(ex.Message,"Lỗi");
                         }));
             }
         }
@@ -565,7 +568,7 @@ namespace GoogleMapPlugin
             request.MapType = cmbMapType.SelectedItem.ToString();
             return request;
         }
-        private void TestRequest()
+        private void TestRequestToTile()
         {
             GoogleMapRequest request = GetRequestFromUI();
             if (request == null)
@@ -573,6 +576,61 @@ namespace GoogleMapPlugin
             MessageBox.Show("X1 = " + request.X1 + "\nY1 = " + request.Y1 + "\n\nX2 = " + request.X2 +
                 "\nY2 = " + request.Y2 + "\n\nKTT = " + request.KinhTuyenTruc +
                 "\nZoom = " + request.Zoom + "\nMapType = " + request.MapType,"TEST GOOGLE MAP REQUEST");
+        }
+        private void StartRealTileDownload()
+        {
+            // ==========================================
+            // 1. LẤY REQUEST TỪ GIAO DIỆN
+            // ==========================================
+            GoogleMapRequest request = GetRequestFromUI();
+            if (request == null)
+                return;
+            // ==========================================
+            // 2. CHUYỂN VN2000 → WGS84
+            // ==========================================
+            CoordinateService coordinateService = new CoordinateService();
+            Wgs84Coordinate wgs1 = coordinateService.ToWgs84(request.X1,request.Y1,request.KinhTuyenTruc);
+            Wgs84Coordinate wgs2 = coordinateService.ToWgs84(request.X2,request.Y2,request.KinhTuyenTruc);
+            // ==========================================
+            // 3. XÁC ĐỊNH MIN / MAX
+            // ==========================================
+            double latMin = Math.Min(wgs1.Latitude, wgs2.Latitude);
+            double latMax = Math.Max(wgs1.Latitude, wgs2.Latitude);
+            double lonMin = Math.Min(wgs1.Longitude, wgs2.Longitude);
+            double lonMax = Math.Max(wgs1.Longitude, wgs2.Longitude);
+            // ==========================================
+            // 4. LẤY DANH SÁCH GOOGLE TILE
+            // ==========================================
+            GoogleTileService tileService = new GoogleTileService();
+            GoogleTileRange range = tileService.GetTileRange(latMin,lonMin,latMax,lonMax,request.Zoom);
+            List<GoogleTileItem> tiles =  tileService.GetTileList(range);
+            if (tiles == null || tiles.Count == 0)
+            {
+                MessageBox.Show("Không xác định được Google Tile.","Google Map",MessageBoxButtons.OK,MessageBoxIcon.Warning);
+                return;
+            }
+            // ==========================================
+            // 5. LẤY LAYER
+            // ==========================================
+            GoogleMapService service = new GoogleMapService();
+            string layer =  service.GetLayer(request.MapType);
+            // ==========================================
+            // 6. KHÓA NÚT DOWNLOAD
+            // ==========================================
+            btnDownload.Enabled = false;
+            labelProgress.Text = "Chuẩn bị tải " + tiles.Count + " tile...";
+            // ==========================================
+            // 7. TẠO STATE
+            // ==========================================
+            TileDownloadTestState state =  new TileDownloadTestState();
+            state.Service = service;
+            state.Tiles = tiles;
+            state.Zoom = request.Zoom;
+            state.Layer = layer;
+            // ==========================================
+            // 8. CHẠY BACKGROUND
+            // ==========================================
+            ThreadPool.QueueUserWorkItem(new WaitCallback(DownloadTileTestWorker),state);
         }
     }
 }
