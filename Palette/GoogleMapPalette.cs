@@ -1,5 +1,6 @@
 ﻿using Autodesk.AutoCAD.Windows;
 using GoogleMapPlugin;//.Palette;
+using System;
 using System.Drawing;
 
 namespace GoogleMapPlugin
@@ -20,7 +21,7 @@ namespace GoogleMapPlugin
 
                 _palette.MinimumSize =
                     new Size(300, 500);
-
+                _palette.KeepFocus = true;
                 GoogleMapControl control =
                     new GoogleMapControl();
 

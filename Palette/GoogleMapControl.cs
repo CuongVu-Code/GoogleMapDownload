@@ -71,6 +71,9 @@ namespace GoogleMapPlugin
         public GoogleMapControl()
         {
             InitializeControl();
+            cmbKTT.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbKTT.IntegralHeight = false;
+            cmbKTT.DropDown += cmbKTT_DropDown;
             LoadKinhTuyenTruc();
         }
         // ==============================
@@ -194,12 +197,14 @@ namespace GoogleMapPlugin
             cmbKTT.Location = new Point(10, y);
             cmbKTT.Width = 260;
             cmbKTT.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbKTT.DropDown += cmbKTT_DropDown;
             panel.Controls.Add(cmbKTT);
             y += 45;
-            // =================================
-            // MAP TYPE
-            // =================================
-            lblMapType = new Label();
+        
+        // =================================
+        // MAP TYPE
+        // =================================
+        lblMapType = new Label();
             lblMapType.Text = "Loại bản đồ:";
             lblMapType.Location = new Point(10, y);
             lblMapType.AutoSize = true;
@@ -276,6 +281,11 @@ namespace GoogleMapPlugin
             btnCheck1.Click += BtnCheck1_Click;
             panel.Controls.Add(btnCheck1);
         }
+        private void cmbKTT_DropDown(object sender, EventArgs e)
+        {
+            cmbKTT.Focus();
+        }
+       
         private void BtnDownload_Click(object sender, EventArgs e) //Nút Download
         {
             //StartTileDownload();
@@ -338,7 +348,8 @@ namespace GoogleMapPlugin
         private void BtnCheck_Click(object sender, EventArgs e)
         {
             //TestCoordinate();
-            TestTileList();
+            //TestTileList();
+            TestMergeTiles();
         }
         private void BtnCheck1_Click(object sender, EventArgs e)
         {
@@ -631,6 +642,55 @@ namespace GoogleMapPlugin
             // 8. CHẠY BACKGROUND
             // ==========================================
             ThreadPool.QueueUserWorkItem(new WaitCallback(DownloadTileTestWorker),state);
+        }
+
+        //Test merge tile
+        private void TestMergeTiles()
+        {
+            try
+            {
+                GoogleTileService tileService =
+                    new GoogleTileService();
+
+                GoogleTileRange range =
+                    new GoogleTileRange();
+
+                range.MinX = 104026;
+                range.MaxX = 104027;
+                range.MinY = 57568;
+                range.MaxY = 57569;
+
+                List<GoogleTileItem> tiles =
+                    tileService.GetTileList(range);
+
+                GoogleTileMergeService mergeService =
+                    new GoogleTileMergeService();
+
+                string tileFolder =
+                    @"C:\GoogleMap\Tiles";
+
+                string outputFile =
+                    @"C:\GoogleMap\merged_test.jpg";
+
+                string result =
+                    mergeService.MergeTiles(
+                        tiles,
+                        17,
+                        tileFolder,
+                        outputFile);
+
+                MessageBox.Show(
+                    "Ghép Tile thành công!\n\n" +
+                    "File:\n" +
+                    result,
+                    "GOOGLE MAP");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Lỗi Merge Tile");
+            }
         }
     }
 }

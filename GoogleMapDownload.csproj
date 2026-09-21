@@ -67,6 +67,7 @@
     <Compile Include="Services\CoordinateService.cs" />
     <Compile Include="Services\GoogleMapService.cs" />
     <Compile Include="Services\GoogleTileFileService.cs" />
+    <Compile Include="Services\GoogleTileMergeService.cs" />
     <Compile Include="Services\GoogleTileService.cs" />
     <Compile Include="Services\RasterImageService.cs" />
   </ItemGroup>
