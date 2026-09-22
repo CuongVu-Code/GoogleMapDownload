@@ -141,7 +141,7 @@ namespace GoogleMapPlugin
             btnPick1.Text = "CHỌN ĐIỂM 1";
             btnPick1.Location = new Point(35, y);
             btnPick1.Width = 235;// 170;
-            btnPick1.Click += BtnPick1_Click;
+            btnPick1.Click += BtnPickPoint1_Click;
             panel.Controls.Add(btnPick1);
             y += 45;
             // =================================
@@ -181,7 +181,7 @@ namespace GoogleMapPlugin
             btnPick2.Text = "CHỌN ĐIỂM 2";
             btnPick2.Location = new Point(35, y);
             btnPick2.Width = 235;//170;
-            btnPick2.Click += BtnPick2_Click;
+            btnPick2.Click += BtnPickPoint2_Click;
             panel.Controls.Add(btnPick2);
             y += 50;
             // =================================
@@ -240,6 +240,7 @@ namespace GoogleMapPlugin
             //ADD LABLE PROGRESS
             labelProgress = new Label();
             labelProgress.Location = new Point(125, y);
+            labelProgress.AutoSize = true;
             panel.Controls.Add(labelProgress);
             y += 50;
             // =================================
@@ -295,54 +296,85 @@ namespace GoogleMapPlugin
         // =====================================
         // CHỌN ĐIỂM 1
         // =====================================
-        private void BtnPick1_Click(object sender, EventArgs e)
+        private void BtnPickPoint1_Click(object sender, EventArgs e)
         {
             Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-            if (doc == null)
-                return;
+
             Editor ed = doc.Editor;
-            PromptPointOptions options = new PromptPointOptions("\nChọn điểm 1: ");
-            PromptPointResult result = ed.GetPoint(options);
-            if (result.Status == PromptStatus.OK)
+
+            // Cho AutoCAD nhận focus
+            GoogleMapPalette.SetKeepFocus(false);
+
+            try
             {
-                Point3d point = result.Value;
-                txtX1.Text = point.X.ToString("0.000000");
-                txtY1.Text = point.Y.ToString("0.000000");
+                PromptPointOptions options =
+                    new PromptPointOptions(
+                        "\nChọn điểm 1: ");
+
+                PromptPointResult result =
+                    ed.GetPoint(options);
+
+                if (result.Status != PromptStatus.OK)
+                {
+                    return;
+                }
+
+                txtX1.Text =
+                    result.Value.X.ToString("0.000");
+
+                txtY1.Text =
+                    result.Value.Y.ToString("0.000");
+            }
+            finally
+            {
+                // Trả lại focus cho Palette
+                GoogleMapPalette.SetKeepFocus(true);
             }
         }
         // =====================================
         // CHỌN ĐIỂM 2
         // =====================================
-        private void BtnPick2_Click(object sender, EventArgs e)
+        private void BtnPickPoint2_Click(
+    object sender,
+    EventArgs e)
         {
-            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-            if (doc == null)
-                return;
-            Editor ed = doc.Editor;
-            // =========================================
-            // LẤY ĐIỂM 1 TỪ TEXTBOX
-            // =========================================
-            double x1;
-            double y1;
-            if (!double.TryParse(txtX1.Text, out x1) || !double.TryParse(txtY1.Text, out y1))
-            {
-                MessageBox.Show("Bạn hãy chọn điểm 1 trước.", "Google Map", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            Point3d p1 = new Point3d(x1, y1, 0.0);
-            // =========================================
-            // CHỌN GÓC ĐỐI DIỆN
-            // =========================================
-            PromptPointResult result = ed.GetCorner("\nChọn góc đối diện: ", p1);
-            // =========================================
-            // KIỂM TRA KẾT QUẢ
-            // =========================================
-            if (result.Status == PromptStatus.OK)
-            {
-                Point3d p2 = result.Value;
-                txtX2.Text = p2.X.ToString("0.000000");
-                txtY2.Text = p2.Y.ToString("0.000000");
+            Document doc =Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
 
+            Editor ed = doc.Editor;
+
+            GoogleMapPalette.SetKeepFocus(false);
+
+            try
+            {
+                PromptPointOptions options =
+                    new PromptPointOptions(
+                        "\nChọn điểm 2: ");
+
+                options.BasePoint =
+                    new Point3d(
+                        double.Parse(txtX1.Text),
+                        double.Parse(txtY1.Text),
+                        0.0);
+
+                options.UseBasePoint = true;
+
+                PromptPointResult result =
+                    ed.GetPoint(options);
+
+                if (result.Status != PromptStatus.OK)
+                {
+                    return;
+                }
+
+                txtX2.Text =
+                    result.Value.X.ToString("0.000");
+
+                txtY2.Text =
+                    result.Value.Y.ToString("0.000");
+            }
+            finally
+            {
+                GoogleMapPalette.SetKeepFocus(true);
             }
         }
         //Nút test
@@ -351,6 +383,7 @@ namespace GoogleMapPlugin
             //TestCoordinate();
             //TestTileList();
             TestMergeTiles();
+            TestCropTiles();
         }
         private void BtnCheck1_Click(object sender, EventArgs e)
         {
@@ -650,19 +683,94 @@ namespace GoogleMapPlugin
         {
             try
             {
+                // -----------------------------------------
+                // 1. Lấy Request
+                // -----------------------------------------
+
+                GoogleMapRequest request =
+                    GetRequestFromUI();
+
+                if (request == null)
+                {
+                    return;
+                }
+
+
+                // -----------------------------------------
+                // 2. VN2000 → WGS84
+                // -----------------------------------------
+
+                CoordinateService coordinateService =
+                    new CoordinateService();
+
+                Wgs84Coordinate wgs1 =
+                    coordinateService.ToWgs84(
+                        request.X1,
+                        request.Y1,
+                        request.KinhTuyenTruc);
+
+                Wgs84Coordinate wgs2 =
+                    coordinateService.ToWgs84(
+                        request.X2,
+                        request.Y2,
+                        request.KinhTuyenTruc);
+
+
+                double latMin =
+                    Math.Min(
+                        wgs1.Latitude,
+                        wgs2.Latitude);
+
+                double latMax =
+                    Math.Max(
+                        wgs1.Latitude,
+                        wgs2.Latitude);
+
+                double lonMin =
+                    Math.Min(
+                        wgs1.Longitude,
+                        wgs2.Longitude);
+
+                double lonMax =
+                    Math.Max(
+                        wgs1.Longitude,
+                        wgs2.Longitude);
+
+
+                // -----------------------------------------
+                // 3. Tile Range
+                // -----------------------------------------
+
                 GoogleTileService tileService =
                     new GoogleTileService();
 
                 GoogleTileRange range =
-                    new GoogleTileRange();
+                    tileService.GetTileRange(
+                        latMin,
+                        lonMin,
+                        latMax,
+                        lonMax,
+                        request.Zoom);
 
-                range.MinX = 104026;
-                range.MaxX = 104027;
-                range.MinY = 57568;
-                range.MaxY = 57569;
 
                 List<GoogleTileItem> tiles =
                     tileService.GetTileList(range);
+
+
+                if (tiles == null ||
+                    tiles.Count == 0)
+                {
+                    MessageBox.Show(
+                        "Không có Tile.",
+                        "Google Map");
+
+                    return;
+                }
+
+
+                // -----------------------------------------
+                // 4. Merge
+                // -----------------------------------------
 
                 GoogleTileMergeService mergeService =
                     new GoogleTileMergeService();
@@ -673,15 +781,35 @@ namespace GoogleMapPlugin
                 string outputFile =
                     @"C:\GoogleMap\merged_test.jpg";
 
+
                 string result =
                     mergeService.MergeTiles(
                         tiles,
-                        17,
+                        request.Zoom,
                         tileFolder,
                         outputFile);
 
+
+                // -----------------------------------------
+                // 5. Thông báo
+                // -----------------------------------------
+
                 MessageBox.Show(
-                    "Ghép Tile thành công!\n\n" +
+                    "Merge thành công!\n\n" +
+                    "Tile Range:\n" +
+                    "X: " +
+                    range.MinX +
+                    " → " +
+                    range.MaxX +
+                    "\n" +
+                    "Y: " +
+                    range.MinY +
+                    " → " +
+                    range.MaxY +
+                    "\n\n" +
+                    "Tổng Tile: " +
+                    tiles.Count +
+                    "\n\n" +
                     "File:\n" +
                     result,
                     "GOOGLE MAP");
@@ -689,8 +817,178 @@ namespace GoogleMapPlugin
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    ex.Message,
-                    "Lỗi Merge Tile");
+                    ex.ToString(),
+                    "Lỗi Merge");
+            }
+        }
+        private void TestCropTiles()
+        {
+            try
+            {
+                // -----------------------------------------
+                // 1. Lấy thông tin từ giao diện
+                // -----------------------------------------
+
+                GoogleMapRequest request =
+                    GetRequestFromUI();
+
+                if (request == null)
+                {
+                    return;
+                }
+
+
+                // -----------------------------------------
+                // 2. VN2000 → WGS84
+                // -----------------------------------------
+
+                CoordinateService coordinateService =
+                    new CoordinateService();
+
+                Wgs84Coordinate wgs1 =
+                    coordinateService.ToWgs84(
+                        request.X1,
+                        request.Y1,
+                        request.KinhTuyenTruc);
+
+                Wgs84Coordinate wgs2 =
+                    coordinateService.ToWgs84(
+                        request.X2,
+                        request.Y2,
+                        request.KinhTuyenTruc);
+
+
+                // -----------------------------------------
+                // 3. Xác định Lat/Lon Min-Max
+                // -----------------------------------------
+
+                double latMin =
+                    Math.Min(
+                        wgs1.Latitude,
+                        wgs2.Latitude);
+
+                double latMax =
+                    Math.Max(
+                        wgs1.Latitude,
+                        wgs2.Latitude);
+
+                double lonMin =
+                    Math.Min(
+                        wgs1.Longitude,
+                        wgs2.Longitude);
+
+                double lonMax =
+                    Math.Max(
+                        wgs1.Longitude,
+                        wgs2.Longitude);
+
+
+                // -----------------------------------------
+                // 4. Xác định Tile Range
+                // -----------------------------------------
+
+                GoogleTileService tileService =
+                    new GoogleTileService();
+
+                GoogleTileRange range =
+                    tileService.GetTileRange(
+                        latMin,
+                        lonMin,
+                        latMax,
+                        lonMax,
+                        request.Zoom);
+
+
+                // -----------------------------------------
+                // 5. Tạo danh sách Tile
+                // -----------------------------------------
+
+                List<GoogleTileItem> tiles =
+                    tileService.GetTileList(range);
+
+                if (tiles == null ||
+                    tiles.Count == 0)
+                {
+                    MessageBox.Show(
+                        "Không có Tile.",
+                        "Google Map");
+
+                    return;
+                }
+
+
+                // -----------------------------------------
+                // 6. Đường dẫn ảnh Merge
+                // -----------------------------------------
+
+                string mergedFile =
+                    @"C:\GoogleMap\merged_test.jpg";
+
+
+                if (!File.Exists(mergedFile))
+                {
+                    MessageBox.Show(
+                        "Không tìm thấy ảnh Merge:\n\n" +
+                        mergedFile +
+                        "\n\n" +
+                        "Hãy tải và Merge Tile trước.",
+                        "Google Map");
+
+                    return;
+                }
+
+
+                // -----------------------------------------
+                // 7. Crop
+                // -----------------------------------------
+
+                GoogleTileCropService cropService =
+                    new GoogleTileCropService();
+
+                string outputFile =
+                    @"C:\GoogleMap\google_map_test.jpg";
+
+
+                string result =
+                    cropService.CropImage(
+                        mergedFile,
+                        outputFile,
+                        range,
+                        latMin,
+                        lonMin,
+                        latMax,
+                        lonMax,
+                        request.Zoom);
+
+
+                // -----------------------------------------
+                // 8. Thông báo
+                // -----------------------------------------
+
+                MessageBox.Show(
+                    "Crop thành công!\n\n" +
+                    "WGS84:\n" +
+                    "Lat Min = " +
+                    latMin.ToString("0.0000000000") +
+                    "\n" +
+                    "Lat Max = " +
+                    latMax.ToString("0.0000000000") +
+                    "\n" +
+                    "Lon Min = " +
+                    lonMin.ToString("0.0000000000") +
+                    "\n" +
+                    "Lon Max = " +
+                    lonMax.ToString("0.0000000000") +
+                    "\n\n" +
+                    "File:\n" +
+                    result,
+                    "GOOGLE MAP");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.ToString(),
+                    "Lỗi Crop");
             }
         }
     }

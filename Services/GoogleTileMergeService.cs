@@ -58,9 +58,13 @@ namespace GoogleMapPlugin.Services
                 {
                     GoogleTileItem tile = tiles[i];
                     string filePath = GetTileFilePath(tileFolder,zoom,tile.X,tile.Y);
+                    //if (!File.Exists(filePath))
+                    //{
+                    //    continue;
+                    //}
                     if (!File.Exists(filePath))
                     {
-                        continue;
+                        throw new FileNotFoundException("Không tìm thấy Tile:\n" + filePath);
                     }
                     int offsetX = (tile.X - minX) * TILE_SIZE;
                     int offsetY = (tile.Y - minY) * TILE_SIZE;
