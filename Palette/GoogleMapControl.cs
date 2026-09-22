@@ -342,6 +342,7 @@ namespace GoogleMapPlugin
                 Point3d p2 = result.Value;
                 txtX2.Text = p2.X.ToString("0.000000");
                 txtY2.Text = p2.Y.ToString("0.000000");
+
             }
         }
         //Nút test
