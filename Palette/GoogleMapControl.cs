@@ -24,6 +24,16 @@ namespace GoogleMapPlugin
             public int Zoom;
             public string Layer;
         }
+        //====Chọn 2 điểm để xác định vùng cần tải ====
+        private Label lblDiem1;
+        private Label lblDiem2;
+
+        private TextBox txtDiem1_X;
+        private TextBox txtDiem1_Y;
+        private TextBox txtDiem2_X;
+        private TextBox txtDiem2_Y;
+
+        private Button btnChonVung;
         // ==============================
         // ĐIỂM 1
         // ==============================
@@ -102,88 +112,77 @@ namespace GoogleMapPlugin
             panel.Dock = DockStyle.Fill;
             panel.Padding = new Padding(10);
             this.Controls.Add(panel);
-            int y = 50;
+            int y = 50;            
             // =================================
             // ĐIỂM 1
             // =================================
             lblPoint1 = new Label();
-            //string st = r + "";
             lblPoint1.Text = "ĐIỂM 1";
-            lblPoint1.Location = new Point(10, y);
+            lblPoint1.Location = new Point(40, y);
             lblPoint1.AutoSize = true;
             lblPoint1.Font = new Font("Arial", 9, FontStyle.Bold);
             panel.Controls.Add(lblPoint1);
-            y += 30;
-            // X1
-            lblX1 = new Label();
-            lblX1.Text = "X:";
-            lblX1.Location = new Point(10, y + 3);
-            lblX1.AutoSize = true;
-            panel.Controls.Add(lblX1);
-            txtX1 = new TextBox();
-            txtX1.Location = new Point(35, y);
-            txtX1.Width = 235;// 260;// 170;
-            panel.Controls.Add(txtX1);
-            y += 30;
-            // Y1
-            lblY1 = new Label();
-            lblY1.Text = "Y:";
-            lblY1.Location = new Point(10, y + 3);
-            lblY1.AutoSize = true;
-            panel.Controls.Add(lblY1);
-            txtY1 = new TextBox();
-            txtY1.Location = new Point(35, y);
-            txtY1.Width = 235;// 260;// 170;
-            panel.Controls.Add(txtY1);
-            y += 30;
-            // BUTTON PICK 1
-            btnPick1 = new Button();
-            btnPick1.Text = "CHỌN ĐIỂM 1";
-            btnPick1.Location = new Point(35, y);
-            btnPick1.Width = 235;// 170;
-            btnPick1.Click += BtnPickPoint1_Click;
-            panel.Controls.Add(btnPick1);
-            y += 45;
             // =================================
             // ĐIỂM 2
             // =================================
             lblPoint2 = new Label();
             lblPoint2.Text = "ĐIỂM 2";
-            lblPoint2.Location = new Point(10, y);
+            lblPoint2.Location = new Point(185, y);
             lblPoint2.AutoSize = true;
             lblPoint2.Font = new Font("Arial", 9, FontStyle.Bold);
             panel.Controls.Add(lblPoint2);
-            y += 30;
+            y += 25;
+            // X1
+            lblX1 = new Label();
+            lblX1.Text = "X1:";
+            lblX1.Location = new Point(10, y + 3);
+            lblX1.AutoSize = true;
+            panel.Controls.Add(lblX1);
+            txtX1 = new TextBox();
+            txtX1.Location = new Point(40, y+3);
+            txtX1.Width = 105;// 260;// 170;
+            panel.Controls.Add(txtX1);
             // X2
             lblX2 = new Label();
-            lblX2.Text = "X:";
-            lblX2.Location = new Point(10, y + 3);
+            lblX2.Text = "X2:";
+            lblX2.Location = new Point(155, y + 3);
             lblX2.AutoSize = true;
             panel.Controls.Add(lblX2);
             txtX2 = new TextBox();
-            txtX2.Location = new Point(35, y);
-            txtX2.Width = 235;//260;// 170;
+            txtX2.Location = new Point(185, y);
+            txtX2.Width = 105;//260;// 170;
             panel.Controls.Add(txtX2);
-            y += 30;
+            y += 25;
+            // Y1
+            lblY1 = new Label();
+            lblY1.Text = "Y1:";
+            lblY1.Location = new Point(10, y + 3);
+            lblY1.AutoSize = true;
+            panel.Controls.Add(lblY1);
+            txtY1 = new TextBox();
+            txtY1.Location = new Point(40, y+3);
+            txtY1.Width = 105;// 260;// 170;
+            panel.Controls.Add(txtY1);           
             // Y2
             lblY2 = new Label();
-            lblY2.Text = "Y:";
-            lblY2.Location = new Point(10, y + 3);
+            lblY2.Text = "Y2:";
+            lblY2.Location = new Point(155, y + 3);
             lblY2.AutoSize = true;
             panel.Controls.Add(lblY2);
             txtY2 = new TextBox();
-            txtY2.Location = new Point(35, y);
-            txtY2.Width = 235;// 260;// 170;
-            panel.Controls.Add(txtY2);
-            y += 30;
-            // BUTTON PICK 2
-            btnPick2 = new Button();
-            btnPick2.Text = "CHỌN ĐIỂM 2";
-            btnPick2.Location = new Point(35, y);
-            btnPick2.Width = 235;//170;
-            btnPick2.Click += BtnPickPoint2_Click;
-            panel.Controls.Add(btnPick2);
-            y += 50;
+            txtY2.Location = new Point(185, y);
+            txtY2.Width = 105;// 260;// 170;
+            panel.Controls.Add(txtY2);     
+            y += 40;
+            // BUTTON PICK 1
+            btnPick1 = new Button();
+            btnPick1.Text = "Chọn vùng";
+            btnPick1.Location = new Point(10, y);
+            btnPick1.Width = 280;// 170;
+            btnPick1.Height = 30;
+            btnPick1.Click += BtnVungChon_Click;
+            panel.Controls.Add(btnPick1);
+            y += 30;            
             // =================================
             // KTT
             // =================================
@@ -192,27 +191,27 @@ namespace GoogleMapPlugin
             lblKTT.Location = new Point(10, y);
             lblKTT.AutoSize = true;
             panel.Controls.Add(lblKTT);
-            y += 25;
+            y += 30;
             cmbKTT = new ComboBox();
             cmbKTT.Location = new Point(10, y);
-            cmbKTT.Width = 260;
+            cmbKTT.Width = 280;
             cmbKTT.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbKTT.DropDown += cmbKTT_DropDown;
             panel.Controls.Add(cmbKTT);
-            y += 45;
+            y += 30;
         
         // =================================
         // MAP TYPE
         // =================================
-        lblMapType = new Label();
+            lblMapType = new Label();
             lblMapType.Text = "Loại bản đồ:";
             lblMapType.Location = new Point(10, y);
             lblMapType.AutoSize = true;
             panel.Controls.Add(lblMapType);
-            y += 25;
+            y += 30;
             cmbMapType = new ComboBox();
             cmbMapType.Location = new Point(10, y);
-            cmbMapType.Width = 260;
+            cmbMapType.Width = 280;
             cmbMapType.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbMapType.Items.Add("Satellite");
             cmbMapType.Items.Add("Road");
@@ -220,7 +219,7 @@ namespace GoogleMapPlugin
             cmbMapType.Items.Add("Terrain");
             cmbMapType.SelectedIndex = 0;
             panel.Controls.Add(cmbMapType);
-            y += 45;
+            y += 30;
             // =================================
             // ZOOM
             // =================================
@@ -229,38 +228,39 @@ namespace GoogleMapPlugin
             lblZoom.Location = new Point(10, y);
             lblZoom.AutoSize = true;
             panel.Controls.Add(lblZoom);
-            y += 25;
+            //y += 30;
             numZoom = new NumericUpDown();
-            numZoom.Location = new Point(10, y);
-            numZoom.Width = 100;
+            numZoom.Location = new Point(140, y);
+            numZoom.Width = 150;
             numZoom.Minimum = 1;
             numZoom.Maximum = 21;
             numZoom.Value = 17;
             panel.Controls.Add(numZoom);
+            y += 30;
             //ADD LABLE PROGRESS
             labelProgress = new Label();
-            labelProgress.Location = new Point(125, y);
+            labelProgress.Location = new Point(10, y);
             labelProgress.AutoSize = true;
             panel.Controls.Add(labelProgress);
-            y += 50;
+            y += 30;
             // =================================
             // DOWNLOAD
             // =================================
             btnDownload = new Button();
             btnDownload.Text = "TẢI GOOGLE MAP";
             btnDownload.Location = new Point(10, y);
-            btnDownload.Width = 260;
-            btnDownload.Height = 35;
+            btnDownload.Width = 280;
+            btnDownload.Height = 30;
             btnDownload.Click += BtnDownload_Click;
             panel.Controls.Add(btnDownload);
-            y += 45;
+            y += 50;
             // =================================
             // DELETE
             // =================================
             btnDelete = new Button();
             btnDelete.Text = "XÓA ẢNH";
             btnDelete.Location = new Point(10, y);
-            btnDelete.Width = 260;
+            btnDelete.Width = 280;
             btnDelete.Height = 30;
             panel.Controls.Add(btnDelete);
             // =================================
@@ -296,7 +296,7 @@ namespace GoogleMapPlugin
         // =====================================
         // CHỌN ĐIỂM 1
         // =====================================
-        private void BtnPickPoint1_Click(object sender, EventArgs e)
+        private void BtnVungChon_Click(object sender, EventArgs e)
         {
             Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
 
@@ -304,79 +304,40 @@ namespace GoogleMapPlugin
 
             // Cho AutoCAD nhận focus
             GoogleMapPalette.SetKeepFocus(false);
-
             try
             {
-                PromptPointOptions options =
-                    new PromptPointOptions(
-                        "\nChọn điểm 1: ");
-
-                PromptPointResult result =
-                    ed.GetPoint(options);
-
-                if (result.Status != PromptStatus.OK)
+                PromptPointOptions options1 = new PromptPointOptions("\nChọn điểm 1: ");
+                PromptPointResult result1 = ed.GetPoint(options1);
+                if (result1.Status != PromptStatus.OK)
                 {
                     return;
                 }
+                txtX1.Text = result1.Value.X.ToString("0.000");
+                txtY1.Text = result1.Value.Y.ToString("0.000");
 
-                txtX1.Text =
-                    result.Value.X.ToString("0.000");
+                //PromptPointOptions options2 = new PromptPointOptions("\nChọn điểm 2: ");
+                //options2.BasePoint = new Point3d(double.Parse(txtX1.Text),double.Parse(txtY1.Text),0.0);
+                //options2.UseBasePoint = true;
+                double x1 = double.Parse(txtX1.Text);
+                double y1 = double.Parse(txtY1.Text);
+                Point3d p1 = new Point3d(x1, y1, 0.0);
 
-                txtY1.Text =
-                    result.Value.Y.ToString("0.000");
+                PromptPointResult result2 = ed.GetCorner("\nChọn góc đối diện: ", p1);
+
+                if (result2.Status != PromptStatus.OK)
+                {
+                    return;
+                }
+                txtX2.Text = result2.Value.X.ToString("0.000");
+                txtY2.Text = result2.Value.Y.ToString("0.000");
             }
             finally
             {
                 // Trả lại focus cho Palette
                 GoogleMapPalette.SetKeepFocus(true);
-            }
+            }           
         }
-        // =====================================
-        // CHỌN ĐIỂM 2
-        // =====================================
-        private void BtnPickPoint2_Click(
-    object sender,
-    EventArgs e)
-        {
-            Document doc =Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
-            Editor ed = doc.Editor;
-
-            GoogleMapPalette.SetKeepFocus(false);
-
-            try
-            {
-                PromptPointOptions options =
-                    new PromptPointOptions(
-                        "\nChọn điểm 2: ");
-
-                options.BasePoint =
-                    new Point3d(
-                        double.Parse(txtX1.Text),
-                        double.Parse(txtY1.Text),
-                        0.0);
-
-                options.UseBasePoint = true;
-
-                PromptPointResult result =
-                    ed.GetPoint(options);
-
-                if (result.Status != PromptStatus.OK)
-                {
-                    return;
-                }
-
-                txtX2.Text =
-                    result.Value.X.ToString("0.000");
-
-                txtY2.Text =
-                    result.Value.Y.ToString("0.000");
-            }
-            finally
-            {
-                GoogleMapPalette.SetKeepFocus(true);
-            }
-        }
+                
         //Nút test
         private void BtnCheck_Click(object sender, EventArgs e)
         {
