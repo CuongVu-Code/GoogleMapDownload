@@ -143,8 +143,356 @@ namespace GoogleMapPlugin.Services
                 longitude,
                 latitude);
         }
+        // =====================================================
+        // WGS84 → VN2000
+        // =====================================================
+
+        public Vn2000Coordinate ToVn2000(
+            double latitude,
+            double longitude,
+            double ktt)
+        {
+            // -------------------------------------------------
+            // 1. Ellipsoid
+            // -------------------------------------------------
+
+            double f =
+                1.0 / INV_F;
+
+            double e2 =
+                f * (2.0 - f);
 
 
+            // -------------------------------------------------
+            // 2. WGS84 Geodetic → ECEF
+            // -------------------------------------------------
+
+            double[] xyz =
+                GeodeticToECEF(
+                    DegreesToRadians(latitude),
+                    DegreesToRadians(longitude),
+                    0.0,
+                    A,
+                    e2);
+
+            double X =
+                xyz[0];
+
+            double Y =
+                xyz[1];
+
+            double Z =
+                xyz[2];
+
+
+            // -------------------------------------------------
+            // 3. Đảo Helmert
+            // -------------------------------------------------
+
+            double[] vn =
+                InverseHelmertTransform(
+                    X,
+                    Y,
+                    Z);
+
+
+            // -------------------------------------------------
+            // 4. ECEF → Geodetic
+            // -------------------------------------------------
+
+            double[] geo =
+                ECEFToGeodetic(
+                    vn[0],
+                    vn[1],
+                    vn[2],
+                    A,
+                    e2);
+
+
+            double lat =
+                geo[0];
+
+            double lon =
+                geo[1];
+
+
+            // -------------------------------------------------
+            // 5. Geodetic → VN2000 TM
+            // -------------------------------------------------
+
+            double[] xy =
+                ForwardTM(
+                    lat,
+                    lon,
+                    ktt,
+                    A,
+                    e2,
+                    0.9999);
+
+
+            return new Vn2000Coordinate(
+                xy[0],
+                xy[1]);
+        }
+
+        // =====================================================
+        // INVERSE HELMERT 7 PARAMETERS
+        // WGS84 → HỆ GỐC VN2000
+        // =====================================================
+
+        private double[] InverseHelmertTransform(
+            double X2,
+            double Y2,
+            double Z2)
+        {
+            // -------------------------------------------------
+            // Arc-second → radian
+            // -------------------------------------------------
+
+            double secToRad =
+                Math.PI /
+                (
+                    180.0 *
+                    3600.0
+                );
+
+
+            double rx =
+                RX *
+                secToRad;
+
+            double ry =
+                RY *
+                secToRad;
+
+            double rz =
+                RZ *
+                secToRad;
+
+
+            // -------------------------------------------------
+            // Scale
+            // -------------------------------------------------
+
+            double scale =
+                1.0 +
+                DS * 1.0e-6;
+
+
+            // -------------------------------------------------
+            // Loại bỏ translation
+            // -------------------------------------------------
+
+            double X =
+                X2 - DX;
+
+            double Y =
+                Y2 - DY;
+
+            double Z =
+                Z2 - DZ;
+
+
+            // -------------------------------------------------
+            // Đảo phép quay
+            // -------------------------------------------------
+
+            double X1 =
+                X / scale;
+
+            double Y1 =
+                Y / scale;
+
+            double Z1 =
+                Z / scale;
+
+
+            double X0 =
+                X1
+                + rz * Y1
+                - ry * Z1;
+
+            double Y0 =
+                -rz * X1
+                + Y1
+                + rx * Z1;
+
+            double Z0 =
+                ry * X1
+                - rx * Y1
+                + Z1;
+
+
+            return new double[]
+            {
+        X0,
+        Y0,
+        Z0
+            };
+        }
+
+        // =====================================================
+        // FORWARD TRANSVERSE MERCATOR
+        // WGS84 Geodetic → VN2000
+        // =====================================================
+
+        private double[] ForwardTM(
+            double lat,
+            double lon,
+            double lon0Degree,
+            double a,
+            double e2,
+            double k0)
+        {
+            double x0 =
+                500000.0;
+
+            double y0 =
+                0.0;
+
+
+            double lon0 =
+                DegreesToRadians(
+                    lon0Degree);
+
+
+            double sinLat =
+                Math.Sin(lat);
+
+            double cosLat =
+                Math.Cos(lat);
+
+            double tanLat =
+                Math.Tan(lat);
+
+
+            double N =
+                a /
+                Math.Sqrt(
+                    1.0 -
+                    e2 *
+                    sinLat *
+                    sinLat);
+
+
+            double T =
+                tanLat *
+                tanLat;
+
+
+            double ep2 =
+                e2 /
+                (1.0 - e2);
+
+
+            double C =
+                ep2 *
+                cosLat *
+                cosLat;
+
+
+            double A1 =
+                (lon - lon0) *
+                cosLat;
+
+
+            double M =
+                a *
+                (
+                    (1.0
+                     - e2 / 4.0
+                     - 3.0 * e2 * e2 / 64.0
+                     - 5.0 * e2 * e2 * e2 / 256.0)
+                    * lat
+
+                    - (
+                        3.0 * e2 / 8.0
+                        + 3.0 * e2 * e2 / 32.0
+                        + 45.0 * e2 * e2 * e2 / 1024.0
+                      )
+                      * Math.Sin(2.0 * lat)
+
+                    + (
+                        15.0 * e2 * e2 / 256.0
+                        + 45.0 * e2 * e2 * e2 / 1024.0
+                      )
+                      * Math.Sin(4.0 * lat)
+
+                    - (
+                        35.0 * e2 * e2 * e2 / 3072.0
+                      )
+                      * Math.Sin(6.0 * lat)
+                );
+
+
+            double M0 = 0.0;
+
+
+            double x =
+                x0 +
+                k0 *
+                N *
+                (
+                    A1
+                    + (
+                        1.0
+                        - T
+                        + C
+                    )
+                    * Math.Pow(A1, 3)
+                    / 6.0
+
+                    + (
+                        5.0
+                        - 18.0 * T
+                        + T * T
+                        + 72.0 * C
+                        - 58.0 * ep2
+                    )
+                    * Math.Pow(A1, 5)
+                    / 120.0
+                );
+
+
+            double y =
+                y0 +
+                k0 *
+                (
+                    M
+                    - M0
+                    + N *
+                    tanLat *
+                    (
+                        A1 * A1 / 2.0
+
+                        + (
+                            5.0
+                            - T
+                            + 9.0 * C
+                            + 4.0 * C * C
+                        )
+                        * Math.Pow(A1, 4)
+                        / 24.0
+
+                        + (
+                            61.0
+                            - 58.0 * T
+                            + T * T
+                            + 600.0 * C
+                            - 330.0 * ep2
+                        )
+                        * Math.Pow(A1, 6)
+                        / 720.0
+                    )
+                );
+
+
+            return new double[]
+            {
+        x,
+        y
+            };
+        }
         // =====================================================
         // INVERSE TRANSVERSE MERCATOR
         // =====================================================

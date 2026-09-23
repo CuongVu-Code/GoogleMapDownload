@@ -55,6 +55,7 @@
     <Compile Include="Models\GoogleTileItem.cs" />
     <Compile Include="Models\GoogleTileRange.cs" />
     <Compile Include="Models\KinhTuyenTruc.cs" />
+    <Compile Include="Models\Vn2000Coordinate.cs" />
     <Compile Include="Models\Wgs84Coordinate.cs" />
     <Compile Include="Palette\GoogleMapControl.cs">
       <SubType>UserControl</SubType>

@@ -388,7 +388,8 @@ namespace GoogleMapPlugin
         private void BtnCheck1_Click(object sender, EventArgs e)
         {
             //TestGoogleTile();
-            TestDownloadTile();
+            //TestDownloadTile();
+            btnTestCoordinate();
         }
         private void LoadKinhTuyenTruc()
         {
@@ -989,6 +990,123 @@ namespace GoogleMapPlugin
                 MessageBox.Show(
                     ex.ToString(),
                     "Lỗi Crop");
+            }
+        }
+        private void btnTestCoordinate()
+        {
+            try
+            {
+                double x =
+                    574108.652052;
+
+                double y =
+                    2363981.765218;
+
+                double ktt =
+                    105.0;
+
+
+                CoordinateService service =
+                    new CoordinateService();
+
+
+                // =============================================
+                // VN2000 → WGS84
+                // =============================================
+
+                Wgs84Coordinate wgs =
+                    service.ToWgs84(
+                        x,
+                        y,
+                        ktt);
+
+
+                // =============================================
+                // WGS84 → VN2000
+                // =============================================
+
+                Vn2000Coordinate vn =
+                    service.ToVn2000(
+                        wgs.Latitude,
+                        wgs.Longitude,
+                        ktt);
+
+
+                // =============================================
+                // Sai số
+                // =============================================
+
+                double dx =
+                    vn.X - x;
+
+                double dy =
+                    vn.Y - y;
+
+                double error =
+                    Math.Sqrt(
+                        dx * dx +
+                        dy * dy);
+
+
+                // =============================================
+                // Hiển thị
+                // =============================================
+
+                MessageBox.Show(
+                    "VN2000 ban đầu:\n\n" +
+
+                    "X = " +
+                    x.ToString("0.000000") +
+                    "\n" +
+
+                    "Y = " +
+                    y.ToString("0.000000") +
+
+                    "\n\n" +
+
+                    "WGS84:\n\n" +
+
+                    "Longitude = " +
+                    wgs.Longitude.ToString("0.0000000000") +
+                    "\n" +
+
+                    "Latitude = " +
+                    wgs.Latitude.ToString("0.0000000000") +
+
+                    "\n\n" +
+
+                    "VN2000 sau chuyển đổi:\n\n" +
+
+                    "X = " +
+                    vn.X.ToString("0.000000") +
+                    "\n" +
+
+                    "Y = " +
+                    vn.Y.ToString("0.000000") +
+
+                    "\n\n" +
+
+                    "Sai số:\n\n" +
+
+                    "dX = " +
+                    dx.ToString("0.000000") +
+                    " m\n" +
+
+                    "dY = " +
+                    dy.ToString("0.000000") +
+                    " m\n" +
+
+                    "Sai số tổng = " +
+                    error.ToString("0.000000") +
+                    " m",
+
+                    "TEST VN2000 ↔ WGS84");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.ToString(),
+                    "Lỗi TEST");
             }
         }
     }
