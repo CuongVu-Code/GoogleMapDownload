@@ -2,6 +2,7 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using GoogleMapDownload.Palette;
 using GoogleMapPlugin.Data;
 using GoogleMapPlugin.Models;
 using GoogleMapPlugin.Services;
@@ -15,7 +16,6 @@ using System.Windows.Forms;
 
 namespace GoogleMapPlugin
 {
-
     public partial class GoogleMapControl : UserControl
     {
         private class TileDownloadTestState
@@ -25,6 +25,7 @@ namespace GoogleMapPlugin
             public int Zoom;
             public string Layer;
         }
+        #region"Khởi tạo các control"
         //====Chọn 2 điểm để xác định vùng cần tải ====
         private Label lblDiem1;
         private Label lblDiem2;
@@ -71,11 +72,15 @@ namespace GoogleMapPlugin
         // ==============================
         // BUTTON
         // ==============================
-        private Label labelProgress;
+        //private Label labelProgress;
         private Button btnDownload;
         private Button btnDelete;
         private Button btnCheck;
         private Button btnCheck1;
+
+        private ProgressBarWithText progressBarTile;
+        #endregion
+        #region"Hàm khởi tạo các control"
         // ==============================
         // CONSTRUCTOR
         // ==============================
@@ -87,6 +92,8 @@ namespace GoogleMapPlugin
             cmbKTT.DropDown += cmbKTT_DropDown;
             LoadKinhTuyenTruc();
         }
+        #endregion
+        #region"Khởi tạo giao diện, thêm các control vào Palette"
         // ==============================
         // KHỞI TẠO GIAO DIỆN
         // ==============================
@@ -118,7 +125,7 @@ namespace GoogleMapPlugin
             // ĐIỂM 1
             // =================================
             lblPoint1 = new Label();
-            lblPoint1.Text = "ĐIỂM 1";
+            lblPoint1.Text = "Toạ độ điểm 1";
             lblPoint1.Location = new Point(40, y);
             lblPoint1.AutoSize = true;
             lblPoint1.Font = new Font("Arial", 9, FontStyle.Bold);
@@ -127,7 +134,7 @@ namespace GoogleMapPlugin
             // ĐIỂM 2
             // =================================
             lblPoint2 = new Label();
-            lblPoint2.Text = "ĐIỂM 2";
+            lblPoint2.Text = "Toạ độ điểm 2";
             lblPoint2.Location = new Point(185, y);
             lblPoint2.AutoSize = true;
             lblPoint2.Font = new Font("Arial", 9, FontStyle.Bold);
@@ -175,7 +182,7 @@ namespace GoogleMapPlugin
             txtY2.Width = 105;// 260;// 170;
             panel.Controls.Add(txtY2);     
             y += 40;
-            // BUTTON PICK 1
+            // BUTTON CHỌN VÙNG BẢN DỒ CẦN TẢI
             btnPick1 = new Button();
             btnPick1.Text = "Chọn vùng";
             btnPick1.Location = new Point(10, y);
@@ -199,13 +206,12 @@ namespace GoogleMapPlugin
             cmbKTT.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbKTT.DropDown += cmbKTT_DropDown;
             panel.Controls.Add(cmbKTT);
-            y += 30;
-        
+            y += 30;        
         // =================================
         // MAP TYPE
         // =================================
             lblMapType = new Label();
-            lblMapType.Text = "Loại bản đồ:";
+            lblMapType.Text = "Kiểu bản đồ:";
             lblMapType.Location = new Point(10, y);
             lblMapType.AutoSize = true;
             panel.Controls.Add(lblMapType);
@@ -237,12 +243,17 @@ namespace GoogleMapPlugin
             numZoom.Maximum = 21;
             numZoom.Value = 17;
             panel.Controls.Add(numZoom);
-            y += 30;
-            //ADD LABLE PROGRESS
-            labelProgress = new Label();
-            labelProgress.Location = new Point(10, y);
-            labelProgress.AutoSize = true;
-            panel.Controls.Add(labelProgress);
+            y += 30;            
+            //Thêm ProgressBar
+            progressBarTile = new ProgressBarWithText();
+            progressBarTile.Location = new Point(10, y);
+            progressBarTile.Width = 280;
+            progressBarTile.Height = 25;
+            progressBarTile.Minimum = 0;
+            progressBarTile.Maximum = 100;
+            progressBarTile.Value = 0;
+            progressBarTile.Style = ProgressBarStyle.Continuous;
+            panel.Controls.Add(progressBarTile);
             y += 30;
             // =================================
             // DOWNLOAD
@@ -254,7 +265,7 @@ namespace GoogleMapPlugin
             btnDownload.Height = 30;
             btnDownload.Click += BtnDownload_Click;
             panel.Controls.Add(btnDownload);
-            y += 50;
+            y += 30;
             // =================================
             // DELETE
             // =================================
@@ -271,7 +282,7 @@ namespace GoogleMapPlugin
             btnCheck.Text = "GOOGLE CORDINATE";
             btnCheck.Location = new Point(10, y + 45);
             btnCheck.Width = 125;//170;
-            btnCheck.Click += btnTestJgwAccuracy_Click;
+            btnCheck.Click += BtnCheck_Click;
             panel.Controls.Add(btnCheck);
             // =================================
             // TEST1
@@ -280,9 +291,10 @@ namespace GoogleMapPlugin
             btnCheck1.Text = "GOOGLE TILE";
             btnCheck1.Location = new Point(145, y + 45);
             btnCheck1.Width = 125;//170;
-            btnCheck1.Click += BtnCheck1_Click;
+            btnCheck1.Click += btnTestJgwAccuracy_Click;
             panel.Controls.Add(btnCheck1);
         }
+        #endregion
         private void cmbKTT_DropDown(object sender, EventArgs e)
         {
             cmbKTT.Focus();
@@ -352,99 +364,7 @@ namespace GoogleMapPlugin
             cmbKTT.DisplayMember = "HienThi";
             cmbKTT.ValueMember = "KinhDo";
             cmbKTT.SelectedIndex = 0;
-        }
-        //HÀM KIỂM TRA TOẠ ĐỘ VN2000 sang WGS84
-        private void TestCoordinate() //Ham test Toa do
-        {
-            CoordinateService service = new CoordinateService();
-            Wgs84Coordinate result = service.ToWgs84(574108.652052, 2363981.765218, 105.0);
-            MessageBox.Show("VN2000\n\n" + "X = 574108.652052\n" + "Y = 2363981.765218\n" + "KTT = 105.000000°\n\n" + "WGS84\n\n" + "Longitude = " + result.Longitude.ToString("0.000000000000") + "\nLatitude = " + result.Latitude.ToString("0.000000000000"), "TEST VN2000 → WGS84");
-        }
-        //HÀM KIỂM TRA GOOGLE TILE
-        private void TestGoogleTile()
-        {
-            GoogleTileService service = new GoogleTileService();
-            double longitude = 105.716500243568;
-            double latitude = 21.369075499011;
-            int zoom = 17;
-            GoogleTileCoordinate result = service.LatLonToTile(latitude, longitude, zoom);
-            MessageBox.Show(
-                "WGS84\n\n" +
-                "Longitude = " + longitude.ToString("0.000000000000") +
-                "\nLatitude = " + latitude.ToString("0.000000000000") +
-                "\n\nZoom = " + zoom +
-                "\n\nGoogle Tile\n\n" +
-                "Tile X = " + result.TileX +
-                "\nTile Y = " + result.TileY +
-                "\n\nGlobal Pixel\n\n" +
-                "Pixel X = " + result.PixelX.ToString("0.000000") +
-                "\nPixel Y = " + result.PixelY.ToString("0.000000"),
-                "TEST WGS84 → GOOGLE TILE");
-        }
-        //Test download Tile
-        private void TestDownloadTile()
-        {
-            GoogleMapService service = new GoogleMapService();
-            int tileX = 104026;
-            int tileY = 57568;
-            int zoom = 17;
-            string layer = service.GetLayer("satellite");
-            byte[] data = service.DownloadTile(tileX, tileY, zoom, layer);
-            if (data == null)
-            {
-                MessageBox.Show("Tải tile thất bại.", "TEST TILE");
-                return;
-            }
-            string file = @"C:\GoogleMap\test_tile.jpg";
-            File.WriteAllBytes(file, data);
-            MessageBox.Show(
-                "Tải tile thành công!\n\n" +
-                "Tile X = " + tileX + "\n" +
-                "Tile Y = " + tileY + "\n" +
-                "Zoom = " + zoom + "\n" +
-                "Layer = " + layer + "\n\n" +
-                "File:\n" + file,
-                "TEST DOWNLOAD TILE");
-        }
-        private void TestTileList()
-        {
-            GoogleTileService service = new GoogleTileService();
-            // Ví dụ WGS84
-            double latMin = 21.35;
-            double latMax = 21.37;
-            double lonMin = 105.70;
-            double lonMax = 105.72;
-            int zoom = 17;
-            GoogleTileRange range = service.GetTileRange(latMin, lonMin, latMax, lonMax, zoom);
-            List<GoogleTileItem> tiles = service.GetTileList(range);
-            string message = "GOOGLE TILE RANGE\n\n" +
-                "Min X = " + range.MinX +
-                "\nMax X = " + range.MaxX +
-                "\nMin Y = " + range.MinY +
-                "\nMax Y = " + range.MaxY +
-                "\n\nWidth = " + range.Width +
-                "\nHeight = " + range.Height +
-                "\nTotal Tiles = " + range.TotalTiles;
-            MessageBox.Show(message, "TEST TILE LIST");
-        }
-        ///
-        private void TestDownloadTiles()
-        {
-            GoogleMapService service = new GoogleMapService();
-            // ---------------------------------------------------------
-            // TEST TILE
-            // ---------------------------------------------------------
-            List<GoogleTileItem> tiles = new List<GoogleTileItem>();
-            tiles.Add(new GoogleTileItem(104026, 57568));
-            tiles.Add(new GoogleTileItem(104027, 57568));
-            tiles.Add(new GoogleTileItem(104026, 57569));
-            tiles.Add(new GoogleTileItem(104027, 57569));
-            // ---------------------------------------------------------
-            // DOWNLOAD
-            // ---------------------------------------------------------
-            string layer = service.GetLayer("satellite");
-            List<GoogleTileDownloadResult> results = service.DownloadTilesParallel(tiles, 17, layer, 8, TileProgress);
-        }
+        }        
         private void TileProgress(int completed, int total)
         {
             if (this.InvokeRequired)
@@ -452,45 +372,18 @@ namespace GoogleMapPlugin
                 this.Invoke(new GoogleMapService.TileProgressHandler(TileProgress), new object[] { completed, total });
                 return;
             }
-            int percent = 0;
-            if (total > 0)
-            {
-                percent = completed * 100 / total;
-            }
-            labelProgress.Text = "Tile: " + completed + " / " + total + " (" + percent + "%)";
-        }
-        private void StartTileDownload()
-        {
-            GoogleMapService service = new GoogleMapService();
-            List<GoogleTileItem> tiles = new List<GoogleTileItem>();
-            // ---------------------------------------------------------
-            // TEST 4 TILE
-            // ---------------------------------------------------------
-            tiles.Add(new GoogleTileItem(104026, 57568));
-            tiles.Add(new GoogleTileItem(104027, 57568));
-            tiles.Add(new GoogleTileItem(104026, 57569));
-            tiles.Add(new GoogleTileItem(104027, 57569));
-            string layer = service.GetLayer("satellite");
-            TileDownloadTestState state = new TileDownloadTestState();
-            state.Service = service;
-            state.Tiles = tiles;
-            state.Zoom = 17;
-            state.Layer = layer;
-            ThreadPool.QueueUserWorkItem(new WaitCallback(DownloadTileTestWorker), state);
-        }
+            progressBarTile.Maximum = total > 0 ? total : 100;
+            progressBarTile.Value = Math.Min(Math.Max(completed, 0), progressBarTile.Maximum);
+            progressBarTile.CustomText = $"Đang tải Tile: {completed} / {total} ({(total > 0 ? completed * 100 / total : 0)}%)";
+            progressBarTile.Invalidate(); // ép vẽ lại
+        }        
         private void DownloadTileTestWorker(object obj)
         {
             TileDownloadTestState state = (TileDownloadTestState)obj;
             try
             {
-                List<GoogleTileDownloadResult> results =
-                    state.Service.DownloadTilesParallel(
-                        state.Tiles,
-                        state.Zoom,
-                        state.Layer,
-                        8,
-                        new GoogleMapService.TileProgressHandler(
-                            TileProgress));
+                List<GoogleTileDownloadResult> results = state.Service.DownloadTilesParallel(state.Tiles,state.Zoom,state.Layer,8,
+                        new GoogleMapService.TileProgressHandler(TileProgress));
                 // -----------------------------------------------------
                 // LƯU TILE VÀO Ổ CỨNG
                 // -----------------------------------------------------
@@ -505,7 +398,7 @@ namespace GoogleMapPlugin
                         delegate
                         {
                             btnDownload.Enabled = true;
-                            labelProgress.Text =
+                            progressBarTile.CustomText =
                                 "Hoàn thành: " +
                                 success + "/" +
                                 results.Count +
@@ -565,16 +458,7 @@ namespace GoogleMapPlugin
             request.Zoom = Convert.ToInt32(numZoom.Value);
             request.MapType = cmbMapType.SelectedItem.ToString();
             return request;
-        }
-        private void TestRequestToTile()
-        {
-            GoogleMapRequest request = GetRequestFromUI();
-            if (request == null)
-                return;
-            MessageBox.Show("X1 = " + request.X1 + "\nY1 = " + request.Y1 + "\n\nX2 = " + request.X2 +
-                "\nY2 = " + request.Y2 + "\n\nKTT = " + request.KinhTuyenTruc +
-                "\nZoom = " + request.Zoom + "\nMapType = " + request.MapType,"TEST GOOGLE MAP REQUEST");
-        }
+        }        
         private void StartRealTileDownload()
         {
             // ==========================================
@@ -616,7 +500,8 @@ namespace GoogleMapPlugin
             // 6. KHÓA NÚT DOWNLOAD
             // ==========================================
             btnDownload.Enabled = false;
-            labelProgress.Text = "Chuẩn bị tải " + tiles.Count + " tile...";
+            //labelProgress.Text = "Chuẩn bị tải " + tiles.Count + " tile...";
+            progressBarTile.CustomText= "Chuẩn bị tải " + tiles.Count + " tile...";
             // ==========================================
             // 7. TẠO STATE
             // ==========================================
@@ -877,42 +762,26 @@ namespace GoogleMapPlugin
             // =========================================================
             // TEST JGW ACCURACY
             // =========================================================
-
-private void btnTestJgwAccuracy_Click(
-    object sender,
-    EventArgs e)
+private void btnTestJgwAccuracy_Click(object sender,EventArgs e)
         {
             try
             {
                 // =================================================
                 // 1. Lấy Request từ giao diện
                 // =================================================
-
-                GoogleMapRequest request =
-                    GetRequestFromUI();
-
+                GoogleMapRequest request = GetRequestFromUI();
                 if (request == null)
                 {
                     return;
                 }
-
-
                 // =================================================
                 // 2. File ảnh Crop
                 // =================================================
-
-                string imageFile =
-                    @"C:\GoogleMap\google_map_test.jpg";
-
-
+                string imageFile = @"C:\GoogleMap\google_map_test.jpg";
                 // =================================================
                 // 3. File JGW
                 // =================================================
-
-                string jgwFile =
-                    @"C:\GoogleMap\google_map_test.jgw";
-
-
+                string jgwFile = @"C:\GoogleMap\google_map_test.jgw";
                 if (!File.Exists(imageFile))
                 {
                     MessageBox.Show(
@@ -924,8 +793,6 @@ private void btnTestJgwAccuracy_Click(
 
                     return;
                 }
-
-
                 if (!File.Exists(jgwFile))
                 {
                     MessageBox.Show(
@@ -973,128 +840,36 @@ private void btnTestJgwAccuracy_Click(
                 }
 
 
-                double A =
-                    ParseJgwValue(lines[0]);
-
-                double D =
-                    ParseJgwValue(lines[1]);
-
-                double B =
-                    ParseJgwValue(lines[2]);
-
-                double E =
-                    ParseJgwValue(lines[3]);
-
-                double C =
-                    ParseJgwValue(lines[4]);
-
-                double F =
-                    ParseJgwValue(lines[5]);
-
-
+                double A = ParseJgwValue(lines[0]);
+                double D = ParseJgwValue(lines[1]);
+                double B = ParseJgwValue(lines[2]);
+                double E = ParseJgwValue(lines[3]);
+                double C = ParseJgwValue(lines[4]);
+                double F = ParseJgwValue(lines[5]);
                 // =================================================
                 // 6. Chuyển 2 điểm VN2000 → WGS84
                 // =================================================
-
-                CoordinateService coordinateService =
-                    new CoordinateService();
-
-
-                Wgs84Coordinate wgs1 =
-                    coordinateService.ToWgs84(
-                        request.X1,
-                        request.Y1,
-                        request.KinhTuyenTruc);
-
-
-                Wgs84Coordinate wgs2 =
-                    coordinateService.ToWgs84(
-                        request.X2,
-                        request.Y2,
-                        request.KinhTuyenTruc);
-
-
-                double latMin =
-                    Math.Min(
-                        wgs1.Latitude,
-                        wgs2.Latitude);
-
-
-                double latMax =
-                    Math.Max(
-                        wgs1.Latitude,
-                        wgs2.Latitude);
-
-
-                double lonMin =
-                    Math.Min(
-                        wgs1.Longitude,
-                        wgs2.Longitude);
-
-
-                double lonMax =
-                    Math.Max(
-                        wgs1.Longitude,
-                        wgs2.Longitude);
-
-
+                CoordinateService coordinateService = new CoordinateService();
+                Wgs84Coordinate wgs1 =coordinateService.ToWgs84(request.X1, request.Y1, request.KinhTuyenTruc);
+                Wgs84Coordinate wgs2 = coordinateService.ToWgs84(request.X2,request.Y2,request.KinhTuyenTruc);
+                double latMin =Math.Min(wgs1.Latitude,wgs2.Latitude);
+                double latMax = Math.Max(wgs1.Latitude,wgs2.Latitude);
+                double lonMin = Math.Min(wgs1.Longitude,wgs2.Longitude);
+                double lonMax = Math.Max(wgs1.Longitude,wgs2.Longitude);
                 // =================================================
                 // 7. Tính Tile Range
                 // =================================================
-
-                GoogleTileService tileService =
-                    new GoogleTileService();
-
-
-                GoogleTileRange range =
-                    tileService.GetTileRange(
-                        latMin,
-                        lonMin,
-                        latMax,
-                        lonMax,
-                        request.Zoom);
-
-
+                GoogleTileService tileService = new GoogleTileService();
+                GoogleTileRange range = tileService.GetTileRange(latMin,lonMin,latMax,lonMax,request.Zoom);
                 // =================================================
                 // 8. Tính Global Pixel của vùng Crop
                 // =================================================
-
-                PointF globalMin =
-                    LatLonToGlobalPixelForTest(
-                        latMax,
-                        lonMin,
-                        request.Zoom);
-
-
-                PointF globalMax =
-                    LatLonToGlobalPixelForTest(
-                        latMin,
-                        lonMax,
-                        request.Zoom);
-
-
-                double originX =
-                    range.MinX *
-                    256.0;
-
-
-                double originY =
-                    range.MinY *
-                    256.0;
-
-
-                int cropLeft =
-                    (int)Math.Floor(
-                        globalMin.X -
-                        originX);
-
-
-                int cropTop =
-                    (int)Math.Floor(
-                        globalMin.Y -
-                        originY);
-
-
+                PointF globalMin = LatLonToGlobalPixelForTest(latMax,lonMin,request.Zoom);
+                PointF globalMax = LatLonToGlobalPixelForTest(latMin,lonMax,request.Zoom);
+                double originX =range.MinX * 256.0;
+                double originY =range.MinY * 256.0;
+                int cropLeft = (int)Math.Floor(globalMin.X - originX);
+                int cropTop =  (int)Math.Floor(globalMin.Y - originY);
                 // =================================================
                 // 9. 4 TÂM PIXEL CẦN KIỂM TRA
                 //
@@ -1103,215 +878,56 @@ private void btnTestJgwAccuracy_Click(
                 // P3 = dưới trái
                 // P4 = dưới phải
                 // =================================================
-
-                double p1x =
-                    0.5;
-
-                double p1y =
-                    0.5;
-
-
-                double p2x =
-                    width - 0.5;
-
-                double p2y =
-                    0.5;
-
-
-                double p3x =
-                    0.5;
-
-                double p3y =
-                    height - 0.5;
-
-
-                double p4x =
-                    width - 0.5;
-
-                double p4y =
-                    height - 0.5;
-
-
+                double p1x = 0.5;
+                double p1y = 0.5;
+                double p2x = width - 0.5;
+                double p2y = 0.5;
+                double p3x = 0.5;
+                double p3y = height - 0.5;
+                double p4x = width - 0.5;
+                double p4y = height - 0.5;
                 // =================================================
                 // 10. Local Pixel → Global Pixel
                 // =================================================
-
-                double gp1x =
-                    cropLeft + p1x;
-
-                double gp1y =
-                    cropTop + p1y;
-
-
-                double gp2x =
-                    cropLeft + p2x;
-
-                double gp2y =
-                    cropTop + p2y;
-
-
-                double gp3x =
-                    cropLeft + p3x;
-
-                double gp3y =
-                    cropTop + p3y;
-
-
-                double gp4x =
-                    cropLeft + p4x;
-
-                double gp4y =
-                    cropTop + p4y;
-
-
+                double gp1x = cropLeft + p1x;
+                double gp1y = cropTop + p1y;
+                double gp2x = cropLeft + p2x;
+                double gp2y = cropTop + p2y;
+                double gp3x = cropLeft + p3x;
+                double gp3y = cropTop + p3y;
+                double gp4x = cropLeft + p4x;
+                double gp4y = cropTop + p4y;
                 // =================================================
                 // 11. Global Pixel → WGS84
                 // =================================================
-
-                Wgs84Coordinate testWgs1 =
-                    GlobalPixelToWgs84ForTest(
-                        gp1x,
-                        gp1y,
-                        request.Zoom);
-
-
-                Wgs84Coordinate testWgs2 =
-                    GlobalPixelToWgs84ForTest(
-                        gp2x,
-                        gp2y,
-                        request.Zoom);
-
-
-                Wgs84Coordinate testWgs3 =
-                    GlobalPixelToWgs84ForTest(
-                        gp3x,
-                        gp3y,
-                        request.Zoom);
-
-
-                Wgs84Coordinate testWgs4 =
-                    GlobalPixelToWgs84ForTest(
-                        gp4x,
-                        gp4y,
-                        request.Zoom);
-
-
+                Wgs84Coordinate testWgs1 = GlobalPixelToWgs84ForTest(gp1x,gp1y,request.Zoom);
+                Wgs84Coordinate testWgs2 = GlobalPixelToWgs84ForTest(gp2x,gp2y,request.Zoom);
+                Wgs84Coordinate testWgs3 = GlobalPixelToWgs84ForTest(gp3x,gp3y,request.Zoom);
+                Wgs84Coordinate testWgs4 = GlobalPixelToWgs84ForTest(gp4x,gp4y,request.Zoom);
                 // =================================================
                 // 12. WGS84 → VN2000
                 // =================================================
-
-                Vn2000Coordinate real1 =
-                    coordinateService.ToVn2000(
-                        testWgs1.Latitude,
-                        testWgs1.Longitude,
-                        request.KinhTuyenTruc);
-
-
-                Vn2000Coordinate real2 =
-                    coordinateService.ToVn2000(
-                        testWgs2.Latitude,
-                        testWgs2.Longitude,
-                        request.KinhTuyenTruc);
-
-
-                Vn2000Coordinate real3 =
-                    coordinateService.ToVn2000(
-                        testWgs3.Latitude,
-                        testWgs3.Longitude,
-                        request.KinhTuyenTruc);
-
-
-                Vn2000Coordinate real4 =
-                    coordinateService.ToVn2000(
-                        testWgs4.Latitude,
-                        testWgs4.Longitude,
-                        request.KinhTuyenTruc);
-
-
+                Vn2000Coordinate real1 = coordinateService.ToVn2000(testWgs1.Latitude,testWgs1.Longitude, request.KinhTuyenTruc);
+                Vn2000Coordinate real2 = coordinateService.ToVn2000(testWgs2.Latitude,testWgs2.Longitude, request.KinhTuyenTruc);
+                Vn2000Coordinate real3 = coordinateService.ToVn2000(testWgs3.Latitude,testWgs3.Longitude, request.KinhTuyenTruc);
+                Vn2000Coordinate real4 = coordinateService.ToVn2000(testWgs4.Latitude,testWgs4.Longitude, request.KinhTuyenTruc);
                 // =================================================
                 // 13. Dùng JGW tính lại VN2000
                 // =================================================
-
-                Vn2000Coordinate jgw1 =
-                    ApplyJgw(
-                        p1x,
-                        p1y,
-                        A,
-                        B,
-                        C,
-                        D,
-                        E,
-                        F);
-
-
-                Vn2000Coordinate jgw2 =
-                    ApplyJgw(
-                        p2x,
-                        p2y,
-                        A,
-                        B,
-                        C,
-                        D,
-                        E,
-                        F);
-
-
-                Vn2000Coordinate jgw3 =
-                    ApplyJgw(
-                        p3x,
-                        p3y,
-                        A,
-                        B,
-                        C,
-                        D,
-                        E,
-                        F);
-
-
-                Vn2000Coordinate jgw4 =
-                    ApplyJgw(
-                        p4x,
-                        p4y,
-                        A,
-                        B,
-                        C,
-                        D,
-                        E,
-                        F);
-
-
+                Vn2000Coordinate jgw1 = ApplyJgw(p1x,p1y,A,B,C,D,E,F);
+                Vn2000Coordinate jgw2 = ApplyJgw(p2x,p2y,A,B,C,D,E,F);
+                Vn2000Coordinate jgw3 = ApplyJgw(p3x,p3y,A,B,C,D,E,F);
+                Vn2000Coordinate jgw4 = ApplyJgw(p4x,p4y,A,B,C,D,E,F);
                 // =================================================
                 // 14. Tính sai số
                 // =================================================
-
-                double error1 =
-                    CalculateError(
-                        real1,
-                        jgw1);
-
-
-                double error2 =
-                    CalculateError(
-                        real2,
-                        jgw2);
-
-
-                double error3 =
-                    CalculateError(
-                        real3,
-                        jgw3);
-
-
-                double error4 =
-                    CalculateError(
-                        real4,
-                        jgw4);
-
-
+                double error1 = CalculateError(real1,jgw1);
+                double error2 = CalculateError(real2,jgw2);
+                double error3 = CalculateError(real3,jgw3);
+                double error4 = CalculateError(real4,jgw4);
                 // =================================================
                 // 15. Tạo nội dung báo cáo
                 // =================================================
-
                 string message =
                     "KIỂM TRA ĐỘ CHÍNH XÁC JGW\n" +
                     "============================\n\n" +
@@ -1417,7 +1033,9 @@ private void btnTestJgwAccuracy_Click(
             double latitude = 180.0 /Math.PI * Math.Atan(Math.Sinh(n));
             return new Wgs84Coordinate(longitude,latitude);
         }
-
+               
     }
 
 }
+
+
