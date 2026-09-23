@@ -8,962 +8,267 @@ namespace GoogleMapPlugin.Services
         // =====================================================
         // WGS84
         // =====================================================
-
         private const double A = 6378137.0;
-
-        private const double INV_F =
-            298.257223563;
-
-
+        private const double INV_F = 298.257223563;
         // =====================================================
         // 7 THAM SỐ TOWGS84
         // LẤY ĐÚNG TỪ PYTHON CỦA BẠN
         // =====================================================
-
-        private const double DX =
-            -191.90441429;
-
-        private const double DY =
-            -39.30318279;
-
-        private const double DZ =
-            -111.45032835;
-
-        private const double RX =
-            -0.00928836;
-
-        private const double RY =
-             0.01975479;
-
-        private const double RZ =
-            -0.00427372;
-
-        private const double DS =
-             0.252906278;
-
-
+        private const double DX = -191.90441429;
+        private const double DY = -39.30318279;
+        private const double DZ = -111.45032835;
+        private const double RX = -0.00928836;
+        private const double RY =  0.01975479;
+        private const double RZ = -0.00427372;
+        private const double DS =  0.252906278;
         // =====================================================
         // VN2000 → WGS84
         // =====================================================
-
-        public Wgs84Coordinate ToWgs84(
-            double x,
-            double y,
-            double ktt)
+         public Wgs84Coordinate ToWgs84(double x, double y, double ktt)
         {
             // -------------------------------------------------
             // 1. Ellipsoid
             // -------------------------------------------------
-
-            double f =
-                1.0 / INV_F;
-
-            double e2 =
-                f * (2.0 - f);
-
-
+            double f = 1.0 / INV_F;
+            double e2 = f * (2.0 - f);
             // -------------------------------------------------
             // 2. VN2000 → tọa độ địa lý
             // -------------------------------------------------
-
-            double[] geo =
-                InverseTM(
-                    x,
-                    y,
-                    ktt,
-                    A,
-                    e2,
-                    0.9999);
-
-
-            double lat =
-                geo[0];
-
-            double lon =
-                geo[1];
-
-
+            double[] geo = InverseTM(x,y,ktt,A,e2,0.9999);
+            double lat =  geo[0];
+            double lon =  geo[1];
             // -------------------------------------------------
             // 3. Geodetic → ECEF
             // -------------------------------------------------
-
-            double[] xyz =
-                GeodeticToECEF(
-                    lat,
-                    lon,
-                    0.0,
-                    A,
-                    e2);
-
-
-            double X =
-                xyz[0];
-
-            double Y =
-                xyz[1];
-
-            double Z =
-                xyz[2];
-
-
+            double[] xyz = GeodeticToECEF(lat,lon,0.0,A,e2);
+            double X = xyz[0];
+            double Y = xyz[1];
+            double Z = xyz[2];
             // -------------------------------------------------
             // 4. Helmert 7 tham số
             // -------------------------------------------------
-
-            double[] wgs =
-                HelmertTransform(
-                    X,
-                    Y,
-                    Z);
-
-
+            double[] wgs = HelmertTransform(X,Y,Z);
             // -------------------------------------------------
             // 5. ECEF → WGS84 Geodetic
             // -------------------------------------------------
-
-            double[] result =
-                ECEFToGeodetic(
-                    wgs[0],
-                    wgs[1],
-                    wgs[2],
-                    A,
-                    e2);
-
-
-            double latitude =
-                RadiansToDegrees(
-                    result[0]);
-
-            double longitude =
-                RadiansToDegrees(
-                    result[1]);
-
-
-            return new Wgs84Coordinate(
-                longitude,
-                latitude);
+            double[] result = ECEFToGeodetic(wgs[0],wgs[1],wgs[2],A,e2);
+            double latitude = RadiansToDegrees(result[0]);
+            double longitude = RadiansToDegrees(result[1]);
+            return new Wgs84Coordinate(longitude,latitude);
         }
         // =====================================================
         // WGS84 → VN2000
         // =====================================================
-
-        public Vn2000Coordinate ToVn2000(
-            double latitude,
-            double longitude,
-            double ktt)
+        public Vn2000Coordinate ToVn2000(double latitude,double longitude,double ktt)
         {
             // -------------------------------------------------
             // 1. Ellipsoid
             // -------------------------------------------------
-
-            double f =
-                1.0 / INV_F;
-
-            double e2 =
-                f * (2.0 - f);
-
-
+            double f = 1.0 / INV_F;
+            double e2 = f * (2.0 - f);
             // -------------------------------------------------
             // 2. WGS84 Geodetic → ECEF
             // -------------------------------------------------
-
-            double[] xyz =
-                GeodeticToECEF(
-                    DegreesToRadians(latitude),
-                    DegreesToRadians(longitude),
-                    0.0,
-                    A,
-                    e2);
-
-            double X =
-                xyz[0];
-
-            double Y =
-                xyz[1];
-
-            double Z =
-                xyz[2];
-
-
+            double[] xyz = GeodeticToECEF(DegreesToRadians(latitude),DegreesToRadians(longitude),0.0,A,e2);
+            double X = xyz[0];
+            double Y = xyz[1];
+            double Z = xyz[2];
             // -------------------------------------------------
             // 3. Đảo Helmert
             // -------------------------------------------------
-
-            double[] vn =
-                InverseHelmertTransform(
-                    X,
-                    Y,
-                    Z);
-
-
+            double[] vn = InverseHelmertTransform(X,Y,Z);
             // -------------------------------------------------
             // 4. ECEF → Geodetic
             // -------------------------------------------------
-
-            double[] geo =
-                ECEFToGeodetic(
-                    vn[0],
-                    vn[1],
-                    vn[2],
-                    A,
-                    e2);
-
-
-            double lat =
-                geo[0];
-
-            double lon =
-                geo[1];
-
-
+            double[] geo = ECEFToGeodetic(vn[0],vn[1],vn[2],A,e2);
+            double lat = geo[0];
+            double lon = geo[1];
             // -------------------------------------------------
             // 5. Geodetic → VN2000 TM
             // -------------------------------------------------
-
-            double[] xy =
-                ForwardTM(
-                    lat,
-                    lon,
-                    ktt,
-                    A,
-                    e2,
-                    0.9999);
-
-
-            return new Vn2000Coordinate(
-                xy[0],
-                xy[1]);
+            double[] xy = ForwardTM(lat,lon,ktt,A,e2,0.9999);
+            return new Vn2000Coordinate(xy[0],xy[1]);
         }
-
         // =====================================================
         // INVERSE HELMERT 7 PARAMETERS
         // WGS84 → HỆ GỐC VN2000
         // =====================================================
 
-        private double[] InverseHelmertTransform(
-            double X2,
-            double Y2,
-            double Z2)
+        private double[] InverseHelmertTransform(double X2,double Y2,double Z2)
         {
             // -------------------------------------------------
             // Arc-second → radian
             // -------------------------------------------------
-
-            double secToRad =
-                Math.PI /
-                (
-                    180.0 *
-                    3600.0
-                );
-
-
-            double rx =
-                RX *
-                secToRad;
-
-            double ry =
-                RY *
-                secToRad;
-
-            double rz =
-                RZ *
-                secToRad;
-
-
+            double secToRad = Math.PI /(180.0 * 3600.0);
+            double rx = RX * secToRad;
+            double ry = RY * secToRad;
+            double rz = RZ * secToRad;
             // -------------------------------------------------
             // Scale
             // -------------------------------------------------
-
-            double scale =
-                1.0 +
-                DS * 1.0e-6;
-
-
+            double scale =  1.0 +  DS * 1.0e-6;
             // -------------------------------------------------
             // Loại bỏ translation
             // -------------------------------------------------
-
-            double X =
-                X2 - DX;
-
-            double Y =
-                Y2 - DY;
-
-            double Z =
-                Z2 - DZ;
-
-
+            double X = X2 - DX;
+            double Y = Y2 - DY;
+            double Z = Z2 - DZ;
             // -------------------------------------------------
             // Đảo phép quay
             // -------------------------------------------------
-
-            double X1 =
-                X / scale;
-
-            double Y1 =
-                Y / scale;
-
-            double Z1 =
-                Z / scale;
-
-
-            double X0 =
-                X1
-                + rz * Y1
-                - ry * Z1;
-
-            double Y0 =
-                -rz * X1
-                + Y1
-                + rx * Z1;
-
-            double Z0 =
-                ry * X1
-                - rx * Y1
-                + Z1;
-
-
-            return new double[]
-            {
-        X0,
-        Y0,
-        Z0
-            };
+            double X1 = X / scale;
+            double Y1 = Y / scale;
+            double Z1 = Z / scale;
+            double X0 = X1 + rz * Y1 - ry * Z1;
+            double Y0 = -rz * X1 + Y1 + rx * Z1;
+            double Z0 = ry * X1 - rx * Y1 + Z1;
+            return new double[]{X0,Y0,Z0};
         }
-
         // =====================================================
         // FORWARD TRANSVERSE MERCATOR
         // WGS84 Geodetic → VN2000
         // =====================================================
-
-        private double[] ForwardTM(
-            double lat,
-            double lon,
-            double lon0Degree,
-            double a,
-            double e2,
-            double k0)
+        private double[] ForwardTM(double lat,double lon,double lon0Degree,double a,double e2, double k0)
         {
-            double x0 =
-                500000.0;
-
-            double y0 =
-                0.0;
-
-
-            double lon0 =
-                DegreesToRadians(
-                    lon0Degree);
-
-
-            double sinLat =
-                Math.Sin(lat);
-
-            double cosLat =
-                Math.Cos(lat);
-
-            double tanLat =
-                Math.Tan(lat);
-
-
-            double N =
-                a /
-                Math.Sqrt(
-                    1.0 -
-                    e2 *
-                    sinLat *
-                    sinLat);
-
-
-            double T =
-                tanLat *
-                tanLat;
-
-
-            double ep2 =
-                e2 /
-                (1.0 - e2);
-
-
-            double C =
-                ep2 *
-                cosLat *
-                cosLat;
-
-
-            double A1 =
-                (lon - lon0) *
-                cosLat;
-
-
-            double M =
-                a *
-                (
-                    (1.0
-                     - e2 / 4.0
-                     - 3.0 * e2 * e2 / 64.0
-                     - 5.0 * e2 * e2 * e2 / 256.0)
-                    * lat
-
-                    - (
-                        3.0 * e2 / 8.0
-                        + 3.0 * e2 * e2 / 32.0
-                        + 45.0 * e2 * e2 * e2 / 1024.0
-                      )
-                      * Math.Sin(2.0 * lat)
-
-                    + (
-                        15.0 * e2 * e2 / 256.0
-                        + 45.0 * e2 * e2 * e2 / 1024.0
-                      )
-                      * Math.Sin(4.0 * lat)
-
-                    - (
-                        35.0 * e2 * e2 * e2 / 3072.0
-                      )
-                      * Math.Sin(6.0 * lat)
-                );
-
-
+            double x0 = 500000.0;
+            double y0 = 0.0;
+            double lon0 = DegreesToRadians(lon0Degree);
+            double sinLat = Math.Sin(lat);
+            double cosLat = Math.Cos(lat);
+            double tanLat = Math.Tan(lat);
+            double N = a / Math.Sqrt(1.0 - e2 * sinLat * sinLat);
+            double T = tanLat * tanLat;
+            double ep2 = e2 /(1.0 - e2);
+            double C = ep2 * cosLat * cosLat;
+            double A1 = (lon - lon0) * cosLat;
+            double M =  a * ((1.0- e2 / 4.0 - 3.0 * e2 * e2 / 64.0 - 5.0 * e2 * e2 * e2 / 256.0) * lat
+                    - (3.0 * e2 / 8.0 + 3.0 * e2 * e2 / 32.0 + 45.0 * e2 * e2 * e2 / 1024.0) * Math.Sin(2.0 * lat)
+                    + (15.0 * e2 * e2 / 256.0 + 45.0 * e2 * e2 * e2 / 1024.0) * Math.Sin(4.0 * lat)
+                    - (35.0 * e2 * e2 * e2 / 3072.0) * Math.Sin(6.0 * lat));
             double M0 = 0.0;
-
-
-            double x =
-                x0 +
-                k0 *
-                N *
-                (
-                    A1
-                    + (
-                        1.0
-                        - T
-                        + C
-                    )
-                    * Math.Pow(A1, 3)
-                    / 6.0
-
-                    + (
-                        5.0
-                        - 18.0 * T
-                        + T * T
-                        + 72.0 * C
-                        - 58.0 * ep2
-                    )
-                    * Math.Pow(A1, 5)
-                    / 120.0
-                );
-
-
-            double y =
-                y0 +
-                k0 *
-                (
-                    M
-                    - M0
-                    + N *
-                    tanLat *
-                    (
-                        A1 * A1 / 2.0
-
-                        + (
-                            5.0
-                            - T
-                            + 9.0 * C
-                            + 4.0 * C * C
-                        )
-                        * Math.Pow(A1, 4)
-                        / 24.0
-
-                        + (
-                            61.0
-                            - 58.0 * T
-                            + T * T
-                            + 600.0 * C
-                            - 330.0 * ep2
-                        )
-                        * Math.Pow(A1, 6)
-                        / 720.0
-                    )
-                );
-
-
-            return new double[]
-            {
-        x,
-        y
-            };
-        }
+            double x = x0 + k0 * N *(A1 + (1.0 - T + C) * Math.Pow(A1, 3)/ 6.0
+                    + (5.0 - 18.0 * T + T * T + 72.0 * C - 58.0 * ep2) * Math.Pow(A1, 5)/ 120.0);
+            double y = y0 + k0 * (M - M0 + N * tanLat * (A1 * A1 / 2.0 + (5.0 - T + 9.0 * C + 4.0 * C * C)
+                        * Math.Pow(A1, 4)/ 24.0 + (61.0 - 58.0 * T + T * T + 600.0 * C - 330.0 * ep2)
+                        * Math.Pow(A1, 6)/ 720.0));
+            return new double[] { x,y};        }
         // =====================================================
         // INVERSE TRANSVERSE MERCATOR
         // =====================================================
-
-        private double[] InverseTM(
-            double x,
-            double y,
-            double lon0Degree,
-            double a,
-            double e2,
-            double k0)
+        private double[] InverseTM(double x,double y,double lon0Degree,double a,double e2,double k0)
         {
-            double x0 =
-                500000.0;
-
-            double y0 =
-                0.0;
-
-
-            double xx =
-                x - x0;
-
-            double yy =
-                y - y0;
-
-
-            double M =
-                yy / k0;
-
-
-            double mu =
-                M /
-                (
-                    a *
-                    (
-                        1.0
-                        - e2 / 4.0
-                        - 3.0 * e2 * e2 / 64.0
-                        - 5.0 * e2 * e2 * e2 / 256.0
-                    )
-                );
-
-
-            double e1 =
-                (
-                    1.0 -
-                    Math.Sqrt(1.0 - e2)
-                )
-                /
-                (
-                    1.0 +
-                    Math.Sqrt(1.0 - e2)
-                );
-
-
-            double e1_2 =
-                e1 * e1;
-
-            double e1_3 =
-                e1_2 * e1;
-
-            double e1_4 =
-                e1_3 * e1;
-
-
-            double phi1 =
-                mu
-
-                + (
-                    3.0 * e1 / 2.0
-                    - 27.0 * e1_3 / 32.0
-                  )
-                  * Math.Sin(2.0 * mu)
-
-                + (
-                    21.0 * e1_2 / 16.0
-                    - 55.0 * e1_4 / 32.0
-                  )
-                  * Math.Sin(4.0 * mu)
-
-                + (
-                    151.0 * e1_3 / 96.0
-                  )
-                  * Math.Sin(6.0 * mu)
-
-                + (
-                    1097.0 * e1_4 / 512.0
-                  )
-                  * Math.Sin(8.0 * mu);
-
-
-            double sinPhi =
-                Math.Sin(phi1);
-
-            double cosPhi =
-                Math.Cos(phi1);
-
-            double tanPhi =
-                Math.Tan(phi1);
-
-
-            double N =
-                a /
-                Math.Sqrt(
-                    1.0 -
-                    e2 *
-                    sinPhi *
-                    sinPhi);
-
-
-            double R =
-                a *
-                (1.0 - e2)
-                /
-                Math.Pow(
-                    1.0 -
-                    e2 *
-                    sinPhi *
-                    sinPhi,
-                    1.5);
-
-
-            double T =
-                tanPhi * tanPhi;
-
-
-            double C =
-                e2 /
-                (1.0 - e2)
-                *
-                cosPhi *
-                cosPhi;
-
-
-            double D =
-                xx /
-                (N * k0);
-
-
+            double x0 = 500000.0;
+            double y0 = 0.0;
+            double xx = x - x0;
+            double yy = y - y0;
+            double M = yy / k0;
+            double mu = M /(a * (1.0 - e2 / 4.0 - 3.0 * e2 * e2 / 64.0 - 5.0 * e2 * e2 * e2 / 256.0));
+            double e1 = (1.0 - Math.Sqrt(1.0 - e2))/(1.0 + Math.Sqrt(1.0 - e2));
+            double e1_2 = e1 * e1;
+            double e1_3 = e1_2 * e1;
+            double e1_4 = e1_3 * e1;
+            double phi1 = mu + (3.0 * e1 / 2.0 - 27.0 * e1_3 / 32.0) * Math.Sin(2.0 * mu)
+                + (21.0 * e1_2 / 16.0 - 55.0 * e1_4 / 32.0) * Math.Sin(4.0 * mu)
+                + (151.0 * e1_3 / 96.0) * Math.Sin(6.0 * mu)
+                + (1097.0 * e1_4 / 512.0)* Math.Sin(8.0 * mu);
+            double sinPhi = Math.Sin(phi1);
+            double cosPhi = Math.Cos(phi1);
+            double tanPhi = Math.Tan(phi1);
+            double N = a /Math.Sqrt(1.0 - e2 * sinPhi * sinPhi);
+            double R = a * (1.0 - e2)/ Math.Pow(1.0 - e2 * sinPhi * sinPhi,1.5);
+            double T = tanPhi * tanPhi;
+            double C = e2 /(1.0 - e2) * cosPhi * cosPhi;
+            double D = xx / (N * k0);
             // -------------------------------------------------
             // Latitude
             // -------------------------------------------------
-
-            double lat =
-                phi1
-
-                - (
-                    N *
-                    tanPhi /
-                    R
-                  )
-                  *
-                  (
-                      D * D / 2.0
-
-                      - (
-                          5.0
-                          + 3.0 * T
-                          + 10.0 * C
-                          - 4.0 * C * C
-                          - 9.0 *
-                            e2 /
-                            (1.0 - e2)
-                        )
-                        *
-                        Math.Pow(D, 4)
-                        / 24.0
-
-                      + (
-                          61.0
-                          + 90.0 * T
-                          + 298.0 * C
-                          + 45.0 * T * T
-                          - 252.0 *
-                            e2 /
-                            (1.0 - e2)
-                          - 3.0 * C * C
-                        )
-                        *
-                        Math.Pow(D, 6)
-                        / 720.0
-                  );
-
-
+            double lat = phi1 - (N * tanPhi / R)*(D * D / 2.0
+                      - (5.0+ 3.0 * T + 10.0 * C - 4.0 * C * C - 9.0 * e2 /(1.0 - e2))
+                        * Math.Pow(D, 4) / 24.0 + (61.0 + 90.0 * T + 298.0 * C
+                          + 45.0 * T * T - 252.0 * e2 /(1.0 - e2)- 3.0 * C * C)
+                        * Math.Pow(D, 6) / 720.0);
             // -------------------------------------------------
             // Longitude
             // -------------------------------------------------
-
-            double lon0 =
-                DegreesToRadians(
-                    lon0Degree);
-
-
-            double lon =
-                lon0
-
-                + (
-                    D
-
-                    - (
-                        1.0
-                        + 2.0 * T
-                        + C
-                      )
-                      *
-                      Math.Pow(D, 3)
-                      / 6.0
-
-                    + (
-                        5.0
-                        - 2.0 * C
-                        + 28.0 * T
-                        - 3.0 * C * C
-                        + 8.0 *
-                          e2 /
-                          (1.0 - e2)
-                        + 24.0 * T * T
-                      )
-                      *
-                      Math.Pow(D, 5)
-                      / 120.0
-                  )
-                  /
-                  cosPhi;
-
-
-            return new double[]
-            {
-                lat,
-                lon
-            };
+            double lon0 = DegreesToRadians(lon0Degree);
+            double lon =  lon0 + (D - (1.0 + 2.0 * T + C)
+                      * Math.Pow(D, 3) / 6.0 + (5.0 - 2.0 * C + 28.0 * T
+                        - 3.0 * C * C + 8.0 * e2 /(1.0 - e2) + 24.0 * T * T)
+                      * Math.Pow(D, 5)/ 120.0)/cosPhi;
+            return new double[]{lat,lon};
         }
-
-
         // =====================================================
         // GEODETIC → ECEF
         // =====================================================
-
-        private double[] GeodeticToECEF(
-            double lat,
-            double lon,
-            double h,
-            double a,
-            double e2)
+        private double[] GeodeticToECEF(double lat,double lon,double h,double a,double e2)
         {
-            double sinLat =
-                Math.Sin(lat);
-
-            double cosLat =
-                Math.Cos(lat);
-
-            double sinLon =
-                Math.Sin(lon);
-
-            double cosLon =
-                Math.Cos(lon);
-
-
-            double N =
-                a /
-                Math.Sqrt(
-                    1.0 -
-                    e2 *
-                    sinLat *
-                    sinLat);
-
-
-            double X =
-                (N + h)
-                * cosLat
-                * cosLon;
-
-
-            double Y =
-                (N + h)
-                * cosLat
-                * sinLon;
-
-
-            double Z =
-                (
-                    N *
-                    (1.0 - e2)
-                    + h
-                )
-                * sinLat;
-
-
-            return new double[]
-            {
-                X,
-                Y,
-                Z
-            };
+            double sinLat = Math.Sin(lat);
+            double cosLat = Math.Cos(lat);
+            double sinLon = Math.Sin(lon);
+            double cosLon = Math.Cos(lon);
+            double N = a /Math.Sqrt(1.0 - e2 * sinLat * sinLat);
+            double X = (N + h) * cosLat * cosLon;
+            double Y = (N + h) * cosLat * sinLon;
+            double Z = (N * (1.0 - e2) + h) * sinLat;
+            return new double[] {X,Y,Z};
         }
-
-
         // =====================================================
         // HELMERT 7 PARAMETERS
         // =====================================================
-
-        private double[] HelmertTransform(
-            double X,
-            double Y,
-            double Z)
+        private double[] HelmertTransform(double X,double Y,double Z)
         {
             // -------------------------------------------------
             // Arc-second → radian
             // -------------------------------------------------
-
-            double secToRad =
-                Math.PI /
-                (
-                    180.0 *
-                    3600.0
-                );
-
-
-            double rx =
-                RX *
-                secToRad;
-
-            double ry =
-                RY *
-                secToRad;
-
-            double rz =
-                RZ *
-                secToRad;
-
-
+            double secToRad = Math.PI /(180.0 *3600.0);
+            double rx = RX * secToRad;
+            double ry = RY * secToRad;
+            double rz = RZ * secToRad;
             // -------------------------------------------------
             // ppm → scale
             // -------------------------------------------------
-
-            double scale =
-                1.0 +
-                DS * 1.0e-6;
-
-
+            double scale = 1.0 + DS * 1.0e-6;
             // -------------------------------------------------
             // Position Vector convention
             // -------------------------------------------------
-
-            double X2 =
-                DX +
-                scale *
-                (
-                    X
-                    - rz * Y
-                    + ry * Z
-                );
-
-
-            double Y2 =
-                DY +
-                scale *
-                (
-                    rz * X
-                    + Y
-                    - rx * Z
-                );
-
-
-            double Z2 =
-                DZ +
-                scale *
-                (
-                    -ry * X
-                    + rx * Y
-                    + Z
-                );
-
-
-            return new double[]
-            {
-                X2,
-                Y2,
-                Z2
-            };
+            double X2 = DX + scale * (X- rz * Y+ ry * Z);
+            double Y2 = DY + scale * (rz * X + Y- rx * Z);
+            double Z2 = DZ + scale * (-ry * X + rx * Y + Z);
+            return new double[] {X2,Y2,Z2};
         }
-
-
         // =====================================================
         // ECEF → GEODETIC
         // =====================================================
-
-        private double[] ECEFToGeodetic(
-            double X,
-            double Y,
-            double Z,
-            double a,
-            double e2)
+        private double[] ECEFToGeodetic(double X,double Y,double Z,double a,double e2)
         {
-            double lon =
-                Math.Atan2(
-                    Y,
-                    X);
-
-
-            double p =
-                Math.Sqrt(
-                    X * X +
-                    Y * Y);
-
-
-            double lat =
-                Math.Atan2(
-                    Z,
-                    p * (1.0 - e2));
-
-
+            double lon = Math.Atan2(Y,X);
+            double p =   Math.Sqrt(X * X + Y * Y);
+            double lat = Math.Atan2(Z,p * (1.0 - e2));
             // -------------------------------------------------
             // Lặp để tìm latitude
             // -------------------------------------------------
-
             for (int i = 0; i < 10; i++)
             {
-                double sinLat =
-                    Math.Sin(lat);
-
-
-                double N =
-                    a /
-                    Math.Sqrt(
-                        1.0 -
-                        e2 *
-                        sinLat *
-                        sinLat);
-
-
-                lat =
-                    Math.Atan2(
-                        Z + e2 * N * sinLat,
-                        p);
+                double sinLat = Math.Sin(lat);
+                double N = a / Math.Sqrt(1.0 - e2 * sinLat * sinLat);
+                lat = Math.Atan2(Z + e2 * N * sinLat,p);
             }
-
-
-            return new double[]
-            {
-                lat,
-                lon
-            };
+            return new double[]{lat,lon};
         }
-
-
         // =====================================================
         // DEG → RAD
         // =====================================================
 
-        private double DegreesToRadians(
-            double degree)
+        private double DegreesToRadians(double degree)
         {
-            return
-                degree *
-                Math.PI /
-                180.0;
+            return  degree * Math.PI / 180.0;
         }
-
-
         // =====================================================
         // RAD → DEG
         // =====================================================
-
-        private double RadiansToDegrees(
-            double radian)
+        private double RadiansToDegrees(double radian)
         {
-            return
-                radian *
-                180.0 /
-                Math.PI;
+            return radian * 180.0 / Math.PI;
         }
     }
 }

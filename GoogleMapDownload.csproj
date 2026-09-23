@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="Commands\GoogleMapCommand.cs" />
     <Compile Include="Data\KinhTuyenTrucData.cs" />
+    <Compile Include="Models\AffineTransform.cs" />
     <Compile Include="Models\GoogleMapRequest.cs" />
     <Compile Include="Models\GoogleMapResult.cs" />
     <Compile Include="Models\GoogleTileCoordinate.cs" />
@@ -65,6 +66,7 @@
     </Compile>
     <Compile Include="Palette\GoogleMapPalette.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\GoogleWorldFileService.cs" />
     <Compile Include="Services\CoordinateService.cs" />
     <Compile Include="Services\GoogleMapService.cs" />
     <Compile Include="Services\GoogleTileCropService.cs" />
