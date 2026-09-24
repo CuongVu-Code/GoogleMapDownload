@@ -1,49 +1,69 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
+﻿using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-namespace GoogleMapDownload.Palette
+public class ProgressBarWithText : ProgressBar
 {
-    public class ProgressBarWithText : ProgressBar
+    public ProgressBarWithText()
     {
-        public ProgressBarWithText()
+        SetStyle(ControlStyles.UserPaint, true);
+    }
+
+    public string CustomText { get; set; } = "";
+    public Color TextColor { get; set; } = Color.Red;
+    public Color BarColorStart { get; set; } = Color.DeepSkyBlue;
+    public Color BarColorEnd { get; set; } = Color.DodgerBlue;
+    public Color BorderColor { get; set; } = Color.Gray;
+    public LinearGradientMode GradientDirection { get; set; } = LinearGradientMode.Vertical;
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        Rectangle rec = ClientRectangle;
+        Graphics g = e.Graphics;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+
+        // Nền
+        g.Clear(BackColor);
+
+        // Viền
+        using (Pen borderPen = new Pen(BorderColor))
         {
-            SetStyle(ControlStyles.UserPaint, true);
+            g.DrawRectangle(borderPen, 0, 0, rec.Width - 1, rec.Height - 1);
         }
-        public string CustomText { get; set; } = "";
-        protected override void OnPaint(PaintEventArgs e)
+
+        // Phần đã tải (fill gradient)
+        double percent = Maximum > 0 ? (double)Value / Maximum : 0;
+        int fillWidth = (int)((rec.Width - 2) * percent);
+
+        if (fillWidth > 0)
         {
-            Rectangle rec = ClientRectangle;
-            Graphics g = e.Graphics;
-            // Vẽ nền
-            g.Clear(BackColor);
-            // Vẽ phần progress (dùng ProgressBarRenderer cho đúng theme Windows)
-            if (ProgressBarRenderer.IsSupported)
+            Rectangle fillRect = new Rectangle(1, 1, fillWidth, rec.Height - 2);
+
+            // LinearGradientBrush yêu cầu rect có Width/Height > 0
+            using (LinearGradientBrush gradBrush = new LinearGradientBrush(
+                fillRect,
+                BarColorStart,
+                BarColorEnd,
+                GradientDirection))
             {
-                ProgressBarRenderer.DrawHorizontalBar(g, rec);
-                Rectangle clip = new Rectangle(
-                    rec.X + 2,
-                    rec.Y + 2,
-                    (int)((rec.Width - 4) * ((double)Value / Maximum)),
-                    rec.Height - 4);
-                ProgressBarRenderer.DrawHorizontalChunks(g, clip);
+                g.FillRectangle(gradBrush, fillRect);
             }
-            // Vẽ chữ đè lên, không có nền
-            string text = string.IsNullOrEmpty(CustomText)
-                ? $"{(Maximum > 0 ? Value * 100 / Maximum : 0)}%"
-                : CustomText;
-            using (StringFormat sf = new StringFormat
-            {
-                Alignment = StringAlignment.Center,
-                LineAlignment = StringAlignment.Center               
-            })
-            using (Font boldFont = new Font(Font, FontStyle.Bold))
-            using (SolidBrush brush = new SolidBrush(Color.Yellow))
-            {
-                g.DrawString(text, boldFont, brush, rec, sf);
-            }
+        }
+
+        // Chữ đè lên
+        string text = string.IsNullOrEmpty(CustomText)
+            ? $"{(int)(percent * 100)}%"
+            : CustomText;
+
+        using (StringFormat sf = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center
+        })
+        using (Font boldFont = new Font(Font, FontStyle.Bold))
+        using (SolidBrush textBrush = new SolidBrush(TextColor))
+        {
+            g.DrawString(text, boldFont, textBrush, rec, sf);
         }
     }
 }

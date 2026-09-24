@@ -2,7 +2,7 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using GoogleMapDownload.Palette;
+using GoogleMapPlugin;//.Palette;
 using GoogleMapPlugin.Cad;
 using GoogleMapPlugin.Data;
 using GoogleMapPlugin.Models;
