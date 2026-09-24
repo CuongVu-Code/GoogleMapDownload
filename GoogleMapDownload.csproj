@@ -61,9 +61,6 @@
     <Compile Include="Palette\GoogleMapControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Palette\GoogleMapControl.Designer.cs">
-      <DependentUpon>GoogleMapControl.cs</DependentUpon>
-    </Compile>
     <Compile Include="Palette\GoogleMapPalette.cs" />
     <Compile Include="Palette\ProgressBarWithText.cs">
       <SubType>Component</SubType>
@@ -76,7 +73,7 @@
     <Compile Include="Services\GoogleTileFileService.cs" />
     <Compile Include="Services\GoogleTileMergeService.cs" />
     <Compile Include="Services\GoogleTileService.cs" />
-    <Compile Include="Services\RasterImageService.cs" />
+    <Compile Include="Services\InsertGeoRasterImage.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

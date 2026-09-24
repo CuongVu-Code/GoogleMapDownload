@@ -3,7 +3,6 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using GoogleMapDownload.Palette;
-using GoogleMapPlugin.Cad;
 using GoogleMapPlugin.Data;
 using GoogleMapPlugin.Models;
 using GoogleMapPlugin.Services;
@@ -25,7 +24,6 @@ namespace GoogleMapPlugin
             public List<GoogleTileItem> Tiles;
             public int Zoom;
             public string Layer;
-            public GoogleMapRequest Request;
         }
         #region"Khởi tạo các control"
         //====Chọn 2 điểm để xác định vùng cần tải ====
@@ -277,7 +275,24 @@ namespace GoogleMapPlugin
             btnDelete.Width = 280;
             btnDelete.Height = 30;
             panel.Controls.Add(btnDelete);
-           
+            // =================================
+            // TEST
+            // =================================
+            btnCheck = new Button();
+            btnCheck.Text = "GOOGLE CORDINATE";
+            btnCheck.Location = new Point(10, y + 45);
+            btnCheck.Width = 125;//170;
+            btnCheck.Click += BtnCheck_Click;
+            panel.Controls.Add(btnCheck);
+            // =================================
+            // TEST1
+            // =================================
+            btnCheck1 = new Button();
+            btnCheck1.Text = "GOOGLE TILE";
+            btnCheck1.Location = new Point(145, y + 45);
+            btnCheck1.Width = 125;//170;
+            btnCheck1.Click += btnTestJgwAccuracy_Click;
+            panel.Controls.Add(btnCheck1);
         }
         #endregion
         private void cmbKTT_DropDown(object sender, EventArgs e)
@@ -285,11 +300,13 @@ namespace GoogleMapPlugin
             cmbKTT.Focus();
         }       
         private void BtnDownload_Click(object sender, EventArgs e) //Nút Download
-        {            
+        {
+            //StartTileDownload();
+            //TestRequestToTile();
             StartRealTileDownload();
         }
         // =====================================
-        // CHỌN VÙNG BẢN ĐỒ CẦN TẢI
+        // CHỌN ĐIỂM 1
         // =====================================
         private void BtnVungChon_Click(object sender, EventArgs e)
         {
@@ -324,7 +341,22 @@ namespace GoogleMapPlugin
                 GoogleMapPalette.SetKeepFocus(true);
             }           
         }
+        //Nút test
+        private void BtnCheck_Click(object sender, EventArgs e)
+        {
+            //TestCoordinate();
+            //TestTileList();
+            TestMergeTiles();
+            TestCropTiles();
+            TestJGW();
             
+        }
+        private void BtnCheck1_Click(object sender, EventArgs e)
+        {
+            //TestGoogleTile();
+            //TestDownloadTile();
+            btnTestCoordinate();
+        }
         private void LoadKinhTuyenTruc()
         {
             cmbKTT.DataSource = KinhTuyenTrucData.GetAll();
@@ -366,62 +398,18 @@ namespace GoogleMapPlugin
                         {
                             btnDownload.Enabled = true;
                             progressBarTile.CustomText =
-                                "Hoàn thành tải: " +
+                                "Hoàn thành: " +
                                 success + "/" +
                                 results.Count +
-                                " tile. Đang ghép ảnh...";
-                            progressBarTile.Invalidate();
-
-                            try
-                            {
-                                // -----------------------------------------------------
-                                // GHÉP TILE → ẢNH LỚN
-                                // -----------------------------------------------------
-                                string mergedFile = MergeTilesAuto(state.Request);
-
-                                // -----------------------------------------------------
-                                // CẮT ẢNH ĐÚNG VÙNG YÊU CẦU
-                                // -----------------------------------------------------
-                                progressBarTile.CustomText = "Đang cắt ảnh...";
-                                progressBarTile.Invalidate();
-                                double latMin, lonMin, latMax, lonMax;
-                                GoogleTileRange range;
-                                string croppedFile = CropTilesAuto(
-                                    state.Request, mergedFile,
-                                    out latMin, out lonMin, out latMax, out lonMax, out range);
-
-                                // -----------------------------------------------------
-                                // TẠO FILE JGW
-                                // -----------------------------------------------------
-                                progressBarTile.CustomText = "Đang tạo file JGW...";
-                                progressBarTile.Invalidate();
-                                string jgwFile = CreateJgwAuto(
-                                    state.Request, croppedFile, range, latMin, lonMin, latMax, lonMax);
-
-                                // -----------------------------------------------------
-                                // CHÈN ẢNH VÀO BẢN VẼ CAD
-                                // -----------------------------------------------------
-                                progressBarTile.CustomText = "Đang chèn ảnh vào CAD...";
-                                progressBarTile.Invalidate();
-                                InsertGeoRasterImage.InsertImageWithJgw(croppedFile, jgwFile);
-
-                                progressBarTile.CustomText = "Hoàn tất! Đã chèn ảnh vào CAD.";
-                                progressBarTile.Invalidate();
-
-                                MessageBox.Show(
-                                    "Đã tải, ghép, cắt ảnh và chèn vào bản vẽ CAD thành công!\n\n" +
-                                    "Tổng tile: " + results.Count + "\n" +
-                                    "Thành công: " + success,
-                                    "GOOGLE MAP");
-                            }
-                            catch (Exception exProcess)
-                            {
-                                progressBarTile.CustomText = "Lỗi khi xử lý sau khi tải ảnh.";
-                                progressBarTile.Invalidate();
-                                MessageBox.Show(
-                                    exProcess.ToString(),
-                                    "Lỗi xử lý sau khi tải ảnh");
-                            }
+                                " tile";
+                            MessageBox.Show(
+                                "Đã tải xong!\n\n" +
+                                "Tổng tile: " +
+                                results.Count +
+                                "\n" +
+                                "Thành công: " +
+                                success,
+                                "GOOGLE MAP");
                         }));
             }
             catch (Exception ex)
@@ -466,6 +454,7 @@ namespace GoogleMapPlugin
             request.X2 = x2;
             request.Y2 = y2;
             request.KinhTuyenTruc = Convert.ToDouble(cmbKTT.SelectedValue);
+            MessageBox.Show("KinhTuyenTruc = " + request.KinhTuyenTruc);
             request.Zoom = Convert.ToInt32(numZoom.Value);
             request.MapType = cmbMapType.SelectedItem.ToString();
             return request;
@@ -511,6 +500,7 @@ namespace GoogleMapPlugin
             // 6. KHÓA NÚT DOWNLOAD
             // ==========================================
             btnDownload.Enabled = false;
+            //labelProgress.Text = "Chuẩn bị tải " + tiles.Count + " tile...";
             progressBarTile.CustomText= "Chuẩn bị tải " + tiles.Count + " tile...";
             // ==========================================
             // 7. TẠO STATE
@@ -520,12 +510,187 @@ namespace GoogleMapPlugin
             state.Tiles = tiles;
             state.Zoom = request.Zoom;
             state.Layer = layer;
-            state.Request = request;
             // ==========================================
             // 8. CHẠY BACKGROUND
             // ==========================================
             ThreadPool.QueueUserWorkItem(new WaitCallback(DownloadTileTestWorker),state);
-        }        
+        }
+        //Test merge tile
+        private void TestMergeTiles()
+        {
+            try
+            {
+                // -----------------------------------------
+                // 1. Lấy Request
+                // -----------------------------------------
+                GoogleMapRequest request = GetRequestFromUI();
+                if (request == null)
+                {
+                    return;
+                }
+                // -----------------------------------------
+                // 2. VN2000 → WGS84
+                // -----------------------------------------
+                CoordinateService coordinateService = new CoordinateService();
+                Wgs84Coordinate wgs1 = coordinateService.ToWgs84(request.X1,request.Y1,request.KinhTuyenTruc);
+                Wgs84Coordinate wgs2 = coordinateService.ToWgs84(request.X2,request.Y2,request.KinhTuyenTruc);
+                double latMin = Math.Min(wgs1.Latitude,wgs2.Latitude);
+                double latMax = Math.Max(wgs1.Latitude,wgs2.Latitude);
+                double lonMin = Math.Min(wgs1.Longitude,wgs2.Longitude);
+                double lonMax = Math.Max(wgs1.Longitude, wgs2.Longitude);
+                // -----------------------------------------
+                // 3. Tile Range
+                // -----------------------------------------
+                GoogleTileService tileService = new GoogleTileService();
+                GoogleTileRange range = tileService.GetTileRange(latMin,lonMin,latMax,lonMax,request.Zoom);
+                List<GoogleTileItem> tiles = tileService.GetTileList(range);
+                if (tiles == null || tiles.Count == 0)
+                {
+                    MessageBox.Show("Không có Tile.", "Google Map");
+                    return;
+                }
+                // -----------------------------------------
+                // 4. Merge
+                // -----------------------------------------
+                GoogleTileMergeService mergeService = new GoogleTileMergeService();
+                string tileFolder = @"C:\GoogleMap\Tiles";
+                string outputFile = @"C:\GoogleMap\merged_test.jpg";
+                string result = mergeService.MergeTiles(tiles, request.Zoom,tileFolder,outputFile);
+                // -----------------------------------------
+                // 5. Thông báo
+                // -----------------------------------------
+                MessageBox.Show("Merge thành công!\n\n" +
+                    "Tile Range:\n" + "X: " +
+                    range.MinX + " → " +
+                    range.MaxX + "\n" + "Y: " +
+                    range.MinY + " → " +
+                    range.MaxY + "\n\n" + "Tổng Tile: " +
+                    tiles.Count + "\n\n" + "File:\n" +
+                    result,"GOOGLE MAP");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(),"Lỗi Merge");
+            }
+        }
+        private void TestCropTiles()
+        {
+            try
+            {
+                // -----------------------------------------
+                // 1. Lấy thông tin từ giao diện
+                // -----------------------------------------
+                GoogleMapRequest request =  GetRequestFromUI();
+                if (request == null)
+                {
+                    return;
+                }
+                // -----------------------------------------
+                // 2. VN2000 → WGS84
+                // -----------------------------------------
+                CoordinateService coordinateService = new CoordinateService();
+                Wgs84Coordinate wgs1 = coordinateService.ToWgs84(request.X1,request.Y1,request.KinhTuyenTruc);
+                Wgs84Coordinate wgs2 = coordinateService.ToWgs84(request.X2,request.Y2, request.KinhTuyenTruc);
+                // -----------------------------------------
+                // 3. Xác định Lat/Lon Min-Max
+                // -----------------------------------------
+                double latMin = Math.Min(wgs1.Latitude,wgs2.Latitude);
+                double latMax = Math.Max(wgs1.Latitude,wgs2.Latitude);
+                double lonMin = Math.Min(wgs1.Longitude, wgs2.Longitude);
+                double lonMax = Math.Max(wgs1.Longitude,wgs2.Longitude);
+                // -----------------------------------------
+                // 4. Xác định Tile Range
+                // -----------------------------------------
+                GoogleTileService tileService = new GoogleTileService();
+                GoogleTileRange range = tileService.GetTileRange(latMin,lonMin,latMax,lonMax,request.Zoom);
+                // -----------------------------------------
+                // 5. Tạo danh sách Tile
+                // -----------------------------------------
+                List<GoogleTileItem> tiles = tileService.GetTileList(range);
+                if (tiles == null || tiles.Count == 0)
+                {
+                    MessageBox.Show("Không có Tile.","Google Map");
+                    return;
+                }
+                // -----------------------------------------
+                // 6. Đường dẫn ảnh Merge
+                // -----------------------------------------
+                string mergedFile = @"C:\GoogleMap\merged_test.jpg";
+                if (!File.Exists(mergedFile))
+                {
+                    MessageBox.Show("Không tìm thấy ảnh Merge:\n\n" + mergedFile +"\n\n" + "Hãy tải và Merge Tile trước.","Google Map");
+                    return;
+                }
+                // -----------------------------------------
+                // 7. Crop
+                // -----------------------------------------
+                GoogleTileCropService cropService = new GoogleTileCropService();
+                string outputFile = @"C:\GoogleMap\google_map_test.jpg";
+                string result = cropService.CropImage(mergedFile,outputFile,range,latMin,lonMin,latMax,lonMax,request.Zoom);
+                // -----------------------------------------
+                // 8. Thông báo
+                // -----------------------------------------
+                MessageBox.Show("Crop thành công!\n\n" +
+                    "WGS84:\n" + "Lat Min = " +
+                    latMin.ToString("0.0000000000") +
+                    "\n" + "Lat Max = " +
+                    latMax.ToString("0.0000000000") +
+                    "\n" + "Lon Min = " +
+                    lonMin.ToString("0.0000000000") +
+                    "\n" + "Lon Max = " +
+                    lonMax.ToString("0.0000000000") +
+                    "\n\n" + "File:\n" + result,"GOOGLE MAP");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(),"Lỗi Crop");
+            }
+        }
+        private void btnTestCoordinate()
+        {
+            try
+            {
+                double x = 574108.652052;
+                double y = 2363981.765218;
+                double ktt = 105.0;
+                CoordinateService service = new CoordinateService();
+                // =============================================
+                // VN2000 → WGS84
+                // =============================================
+                Wgs84Coordinate wgs = service.ToWgs84(x,y,ktt);
+                // =============================================
+                // WGS84 → VN2000
+                // =============================================
+                Vn2000Coordinate vn = service.ToVn2000(wgs.Latitude,wgs.Longitude,ktt);
+                // =============================================
+                // Sai số
+                // =============================================
+                double dx = vn.X - x;
+                double dy = vn.Y - y;
+                double error = Math.Sqrt(dx * dx + dy * dy);
+                // =============================================
+                // Hiển thị
+                // =============================================
+                MessageBox.Show("VN2000 ban đầu:\n\n" +
+                    "X = " + x.ToString("0.000000") + "\n" +
+                    "Y = " + y.ToString("0.000000") + "\n\n" +
+                    "WGS84:\n\n" + "Longitude = " +
+                    wgs.Longitude.ToString("0.0000000000") + "\n" +
+                    "Latitude = " + wgs.Latitude.ToString("0.0000000000") + "\n\n" +
+                    "VN2000 sau chuyển đổi:\n\n" +
+                    "X = " + vn.X.ToString("0.000000") +"\n" +
+                    "Y = " + vn.Y.ToString("0.000000") + "\n\n" +
+                    "Sai số:\n\n" +
+                    "dX = " + dx.ToString("0.000000") +" m\n" +
+                    "dY = " + dy.ToString("0.000000") + " m\n" +
+                    "Sai số tổng = " + error.ToString("0.000000") +
+                    " m","TEST VN2000 ↔ WGS84");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(),"Lỗi TEST");
+            }
+        }
         private void TestJGW()
         {
             try
@@ -594,89 +759,249 @@ namespace GoogleMapPlugin
                 MessageBox.Show(ex.ToString(), "Lỗi TEST JGW");
             }
         }
-        // =========================================================
-        // GHÉP TILE → ẢNH LỚN (dùng cho luồng tự động sau khi tải)
-        // =========================================================
-        private string MergeTilesAuto(GoogleMapRequest request)
+            // =========================================================
+            // TEST JGW ACCURACY
+            // =========================================================
+private void btnTestJgwAccuracy_Click(object sender,EventArgs e)
         {
-            CoordinateService coordinateService = new CoordinateService();
-            Wgs84Coordinate wgs1 = coordinateService.ToWgs84(request.X1, request.Y1, request.KinhTuyenTruc);
-            Wgs84Coordinate wgs2 = coordinateService.ToWgs84(request.X2, request.Y2, request.KinhTuyenTruc);
-            double latMin = Math.Min(wgs1.Latitude, wgs2.Latitude);
-            double latMax = Math.Max(wgs1.Latitude, wgs2.Latitude);
-            double lonMin = Math.Min(wgs1.Longitude, wgs2.Longitude);
-            double lonMax = Math.Max(wgs1.Longitude, wgs2.Longitude);
+            try
+            {
+                // =================================================
+                // 1. Lấy Request từ giao diện
+                // =================================================
+                GoogleMapRequest request = GetRequestFromUI();
+                if (request == null)
+                {
+                    return;
+                }
+                // =================================================
+                // 2. File ảnh Crop
+                // =================================================
+                string imageFile = @"C:\GoogleMap\google_map_test.jpg";
+                // =================================================
+                // 3. File JGW
+                // =================================================
+                string jgwFile = @"C:\GoogleMap\google_map_test.jgw";
+                if (!File.Exists(imageFile))
+                {
+                    MessageBox.Show(
+                        "Không tìm thấy ảnh Crop:\n\n" +
+                        imageFile +
+                        "\n\n" +
+                        "Hãy chạy TEST CROP trước.",
+                        "TEST JGW ACCURACY");
 
-            GoogleTileService tileService = new GoogleTileService();
-            GoogleTileRange range = tileService.GetTileRange(latMin, lonMin, latMax, lonMax, request.Zoom);
-            List<GoogleTileItem> tiles = tileService.GetTileList(range);
-            if (tiles == null || tiles.Count == 0)
-            {
-                throw new Exception("Không xác định được Google Tile để ghép.");
+                    return;
+                }
+                if (!File.Exists(jgwFile))
+                {
+                    MessageBox.Show(
+                        "Không tìm thấy file JGW:\n\n" +
+                        jgwFile +
+                        "\n\n" +
+                        "Hãy chạy TEST JGW trước.",
+                        "TEST JGW ACCURACY");
+
+                    return;
+                }
+
+
+                // =================================================
+                // 4. Đọc kích thước ảnh
+                // =================================================
+
+                Bitmap bitmap =
+                    new Bitmap(imageFile);
+
+                int width =
+                    bitmap.Width;
+
+                int height =
+                    bitmap.Height;
+
+                bitmap.Dispose();
+
+
+                // =================================================
+                // 5. Đọc 6 dòng JGW
+                // =================================================
+
+                string[] lines =
+                    File.ReadAllLines(jgwFile);
+
+
+                if (lines.Length != 6)
+                {
+                    MessageBox.Show(
+                        "File JGW phải có đúng 6 dòng.",
+                        "TEST JGW ACCURACY");
+
+                    return;
+                }
+
+
+                double A = ParseJgwValue(lines[0]);
+                double D = ParseJgwValue(lines[1]);
+                double B = ParseJgwValue(lines[2]);
+                double E = ParseJgwValue(lines[3]);
+                double C = ParseJgwValue(lines[4]);
+                double F = ParseJgwValue(lines[5]);
+                // =================================================
+                // 6. Chuyển 2 điểm VN2000 → WGS84
+                // =================================================
+                CoordinateService coordinateService = new CoordinateService();
+                Wgs84Coordinate wgs1 =coordinateService.ToWgs84(request.X1, request.Y1, request.KinhTuyenTruc);
+                Wgs84Coordinate wgs2 = coordinateService.ToWgs84(request.X2,request.Y2,request.KinhTuyenTruc);
+                double latMin =Math.Min(wgs1.Latitude,wgs2.Latitude);
+                double latMax = Math.Max(wgs1.Latitude,wgs2.Latitude);
+                double lonMin = Math.Min(wgs1.Longitude,wgs2.Longitude);
+                double lonMax = Math.Max(wgs1.Longitude,wgs2.Longitude);
+
+    //            MessageBox.Show(
+    //"wgs1: Lat=" + wgs1.Latitude.ToString("0.000000") + ", Lon=" + wgs1.Longitude.ToString("0.000000") + "\n" +
+    //"wgs2: Lat=" + wgs2.Latitude.ToString("0.000000") + ", Lon=" + wgs2.Longitude.ToString("0.000000") + "\n" +
+    //"latMin=" + latMin.ToString("0.000000") + ", latMax=" + latMax.ToString("0.000000") + "\n" +
+    //"lonMin=" + lonMin.ToString("0.000000") + ", lonMax=" + lonMax.ToString("0.000000"),
+    //"DEBUG - Bước 6");
+                // =================================================
+                // 7. Tính Tile Range
+                // =================================================
+                GoogleTileService tileService = new GoogleTileService();
+                GoogleTileRange range = tileService.GetTileRange(latMin,lonMin,latMax,lonMax,request.Zoom);
+                // =================================================
+                // 8. Tính Global Pixel của vùng Crop
+                // =================================================
+                PointF globalMin = LatLonToGlobalPixelForTest(latMax,lonMin,request.Zoom);
+                PointF globalMax = LatLonToGlobalPixelForTest(latMin,lonMax,request.Zoom);
+                double originX =range.MinX * 256.0;
+                double originY =range.MinY * 256.0;
+                int cropLeft = (int)Math.Floor(globalMin.X - originX);
+                int cropTop =  (int)Math.Floor(globalMin.Y - originY);
+    //            MessageBox.Show(
+    //"range: MinX=" + range.MinX + ", MinY=" + range.MinY + ", MaxX=" + range.MaxX + ", MaxY=" + range.MaxY + "\n" +
+    //"globalMin: X=" + globalMin.X + ", Y=" + globalMin.Y + "\n" +
+    //"globalMax: X=" + globalMax.X + ", Y=" + globalMax.Y + "\n" +
+    //"originX=" + originX + ", originY=" + originY + "\n" +
+    //"cropLeft=" + cropLeft + ", cropTop=" + cropTop,
+    //"DEBUG - Bước 8");
+                // =================================================
+                // 9. 4 TÂM PIXEL CẦN KIỂM TRA
+                //
+                // P1 = trên trái
+                // P2 = trên phải
+                // P3 = dưới trái
+                // P4 = dưới phải
+                // =================================================
+                //double p1x = 0.5;
+                //double p1y = 0.5;
+                //double p2x = width - 0.5;
+                //double p2y = 0.5;
+                //double p3x = 0.5;
+                //double p3y = height - 0.5;
+                //double p4x = width - 0.5;
+                //double p4y = height - 0.5;
+                double p1x = 0;
+                double p1y = 0;
+                double p2x = width - 1;
+                double p2y = 0;
+                double p3x = 0;
+                double p3y = height - 1;
+                double p4x = width - 1;
+                double p4y = height - 1;
+                // =================================================
+                // 10. Local Pixel → Global Pixel
+                // =================================================
+                //double gp1x = cropLeft + p1x;
+                //double gp1y = cropTop + p1y;
+                //double gp2x = cropLeft + p2x;
+                //double gp2y = cropTop + p2y;
+                //double gp3x = cropLeft + p3x;
+                //double gp3y = cropTop + p3y;
+                //double gp4x = cropLeft + p4x;
+                //double gp4y = cropTop + p4y;
+                double gp1x = originX + cropLeft + p1x;
+                double gp1y = originY + cropTop + p1y;
+                double gp2x = originX + cropLeft + p2x;
+                double gp2y = originY + cropTop + p2y;
+                double gp3x = originX + cropLeft + p3x;
+                double gp3y = originY + cropTop + p3y;
+                double gp4x = originX + cropLeft + p4x;
+                double gp4y = originY + cropTop + p4y;
+                // =================================================
+                // 11. Global Pixel → WGS84
+                // =================================================
+                Wgs84Coordinate testWgs1 = GlobalPixelToWgs84ForTest(gp1x,gp1y,request.Zoom);
+                Wgs84Coordinate testWgs2 = GlobalPixelToWgs84ForTest(gp2x,gp2y,request.Zoom);
+                Wgs84Coordinate testWgs3 = GlobalPixelToWgs84ForTest(gp3x,gp3y,request.Zoom);
+                Wgs84Coordinate testWgs4 = GlobalPixelToWgs84ForTest(gp4x,gp4y,request.Zoom);
+                // =================================================
+                // 12. WGS84 → VN2000
+                // =================================================
+                Vn2000Coordinate real1 = coordinateService.ToVn2000(testWgs1.Latitude,testWgs1.Longitude, request.KinhTuyenTruc);
+                Vn2000Coordinate real2 = coordinateService.ToVn2000(testWgs2.Latitude,testWgs2.Longitude, request.KinhTuyenTruc);
+                Vn2000Coordinate real3 = coordinateService.ToVn2000(testWgs3.Latitude,testWgs3.Longitude, request.KinhTuyenTruc);
+                Vn2000Coordinate real4 = coordinateService.ToVn2000(testWgs4.Latitude,testWgs4.Longitude, request.KinhTuyenTruc);
+                // =================================================
+                // 13. Dùng JGW tính lại VN2000
+                // =================================================
+                Vn2000Coordinate jgw1 = ApplyJgw(p1x,p1y,A,B,C,D,E,F);
+                Vn2000Coordinate jgw2 = ApplyJgw(p2x,p2y,A,B,C,D,E,F);
+                Vn2000Coordinate jgw3 = ApplyJgw(p3x,p3y,A,B,C,D,E,F);
+                Vn2000Coordinate jgw4 = ApplyJgw(p4x,p4y,A,B,C,D,E,F);
+                // =================================================
+                // 14. Tính sai số
+                // =================================================
+                double error1 = CalculateError(real1,jgw1);
+                double error2 = CalculateError(real2,jgw2);
+                double error3 = CalculateError(real3,jgw3);
+                double error4 = CalculateError(real4,jgw4);
+                // =================================================
+                // 15. Tạo nội dung báo cáo
+                // =================================================
+                string message =
+                    "KIỂM TRA ĐỘ CHÍNH XÁC JGW\n" +
+                    "============================\n\n" +
+
+                    "Ảnh:\n" +
+                    width +
+                    " x " +
+                    height +
+                    " pixel\n\n" +
+
+                    "JGW:\n" +
+                    "A = " +
+                    A.ToString("0.###############") +
+                    "\n" +
+
+                    "D = " +
+                    D.ToString("0.###############") +
+                    "\n" +
+
+                    "B = " +
+                    B.ToString("0.###############") +
+                    "\n" +
+
+                    "E = " +
+                    E.ToString("0.###############") +
+                    "\n" +
+
+                    "C = " +
+                    C.ToString("0.###############") +
+                    "\n" +
+
+                    "F = " +
+                    F.ToString("0.###############") +
+
+                    "\n\n" +
+
+                    "P1 - GÓC TRÊN TRÁI\n" +"VN2000 thực:\n" +"X = " + real1.X.ToString("0.000000") +"\n" + "Y = " + real1.Y.ToString("0.000000") +"\n" + "VN2000 từ JGW:\n" + "X = " + jgw1.X.ToString("0.000000") + "\n" + "Y = " +jgw1.Y.ToString("0.000000") + "\n" + "Sai số = " +error1.ToString("0.000000") +" m\n\n" + "P2 - GÓC TRÊN PHẢI\n" +"VN2000 thực:\n" +"X = " +real2.X.ToString("0.000000") +"\n" +"Y = " +real2.Y.ToString("0.000000") +"\n" + "VN2000 từ JGW:\n" +"X = " +jgw2.X.ToString("0.000000") +"\n" +"Y = " +jgw2.Y.ToString("0.000000") +"\n" + "Sai số = " + error2.ToString("0.000000") +" m\n\n" +"P3 - GÓC DƯỚI TRÁI\n" +"VN2000 thực:\n" + "X = " + real3.X.ToString("0.000000") +"\n" + "Y = " + real3.Y.ToString("0.000000") + "\n" +"VN2000 từ JGW:\n" +"X = " +jgw3.X.ToString("0.000000") +"\n" + "Y = " + jgw3.Y.ToString("0.000000") +"\n" +"Sai số = " +error3.ToString("0.000000") +" m\n\n" +"P4 - GÓC DƯỚI PHẢI\n" +"VN2000 thực:\n" +"X = " +real4.X.ToString("0.000000") +"\n" +"Y = " + real4.Y.ToString("0.000000") +"\n" +"VN2000 từ JGW:\n" + "X = " + jgw4.X.ToString("0.000000") +"\n" + "Y = " + jgw4.Y.ToString("0.000000") +"\n" +"Sai số = " + error4.ToString("0.000000") +" m";
+                MessageBox.Show(message,"TEST JGW ACCURACY");
             }
-            GoogleTileMergeService mergeService = new GoogleTileMergeService();
-            string tileFolder = @"C:\GoogleMap\Tiles";
-            string outputFile = @"C:\GoogleMap\merged_test.jpg";
-            mergeService.MergeTiles(tiles, request.Zoom, tileFolder, outputFile);
-            return outputFile;
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(),"Lỗi TEST JGW ACCURACY");
+            }
         }
-        // =========================================================
-        // CẮT ẢNH ĐÚNG VÙNG YÊU CẦU (dùng cho luồng tự động)
-        // =========================================================
-        private string CropTilesAuto(
-            GoogleMapRequest request,
-            string mergedFile,
-            out double latMin,
-            out double lonMin,
-            out double latMax,
-            out double lonMax,
-            out GoogleTileRange range)
-        {
-            CoordinateService coordinateService = new CoordinateService();
-            Wgs84Coordinate wgs1 = coordinateService.ToWgs84(request.X1, request.Y1, request.KinhTuyenTruc);
-            Wgs84Coordinate wgs2 = coordinateService.ToWgs84(request.X2, request.Y2, request.KinhTuyenTruc);
-            latMin = Math.Min(wgs1.Latitude, wgs2.Latitude);
-            latMax = Math.Max(wgs1.Latitude, wgs2.Latitude);
-            lonMin = Math.Min(wgs1.Longitude, wgs2.Longitude);
-            lonMax = Math.Max(wgs1.Longitude, wgs2.Longitude);
-            GoogleTileService tileService = new GoogleTileService();
-            range = tileService.GetTileRange(latMin, lonMin, latMax, lonMax, request.Zoom);
-            List<GoogleTileItem> tiles = tileService.GetTileList(range);
-            if (tiles == null || tiles.Count == 0)
-            {
-                throw new Exception("Không có Tile để cắt.");
-            }
-            if (!File.Exists(mergedFile))
-            {
-                throw new Exception("Không tìm thấy ảnh Merge:\n" + mergedFile);
-            }
-            GoogleTileCropService cropService = new GoogleTileCropService();
-            string outputFile = @"C:\GoogleMap\google_map_test.jpg";
-            cropService.CropImage(mergedFile, outputFile, range, latMin, lonMin, latMax, lonMax, request.Zoom);
-            return outputFile;
-        }
-        // =========================================================
-        // TẠO FILE JGW (dùng cho luồng tự động)
-        // =========================================================
-        private string CreateJgwAuto(
-            GoogleMapRequest request,
-            string croppedFile,
-            GoogleTileRange range,
-            double latMin,
-            double lonMin,
-            double latMax,
-            double lonMax)        {
-            string jgwFile = @"C:\GoogleMap\google_map_test.jgw";
-            GoogleWorldFileService worldFileService = new GoogleWorldFileService();
-            string result = worldFileService.CreateJgw(
-                croppedFile, jgwFile, range, latMin, lonMin, latMax, lonMax, request.Zoom, request.KinhTuyenTruc);
-            string[] lines = File.ReadAllLines(result);
-            if (lines.Length != 6)
-            {
-                throw new Exception("File JGW không có đúng 6 dòng.");
-            }
-            return result;
-        }           
         // =========================================================
         // ĐỌC GIÁ TRỊ JGW
         // =========================================================
@@ -742,3 +1067,5 @@ namespace GoogleMapPlugin
     }
 
 }
+
+

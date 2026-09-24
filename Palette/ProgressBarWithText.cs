@@ -12,7 +12,6 @@ namespace GoogleMapDownload.Palette
         {
             SetStyle(ControlStyles.UserPaint, true);
         }
-
         public string CustomText { get; set; } = "";
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -31,7 +30,6 @@ namespace GoogleMapDownload.Palette
                     rec.Height - 4);
                 ProgressBarRenderer.DrawHorizontalChunks(g, clip);
             }
-
             // Vẽ chữ đè lên, không có nền
             string text = string.IsNullOrEmpty(CustomText)
                 ? $"{(Maximum > 0 ? Value * 100 / Maximum : 0)}%"
@@ -42,7 +40,7 @@ namespace GoogleMapDownload.Palette
                 LineAlignment = StringAlignment.Center               
             })
             using (Font boldFont = new Font(Font, FontStyle.Bold))
-            using (SolidBrush brush = new SolidBrush(Color.Purple))
+            using (SolidBrush brush = new SolidBrush(Color.Yellow))
             {
                 g.DrawString(text, boldFont, brush, rec, sf);
             }
