@@ -371,14 +371,12 @@ namespace GoogleMapPlugin
                                 results.Count +
                                 " tile. Đang ghép ảnh...";
                             progressBarTile.Invalidate();
-
                             try
                             {
                                 // -----------------------------------------------------
                                 // GHÉP TILE → ẢNH LỚN
                                 // -----------------------------------------------------
                                 string mergedFile = MergeTilesAuto(state.Request);
-
                                 // -----------------------------------------------------
                                 // CẮT ẢNH ĐÚNG VÙNG YÊU CẦU
                                 // -----------------------------------------------------
@@ -389,7 +387,6 @@ namespace GoogleMapPlugin
                                 string croppedFile = CropTilesAuto(
                                     state.Request, mergedFile,
                                     out latMin, out lonMin, out latMax, out lonMax, out range);
-
                                 // -----------------------------------------------------
                                 // TẠO FILE JGW
                                 // -----------------------------------------------------
@@ -397,19 +394,15 @@ namespace GoogleMapPlugin
                                 progressBarTile.Invalidate();
                                 string jgwFile = CreateJgwAuto(
                                     state.Request, croppedFile, range, latMin, lonMin, latMax, lonMax);
-
                                 // -----------------------------------------------------
                                 // CHÈN ẢNH VÀO BẢN VẼ CAD
                                 // -----------------------------------------------------
                                 progressBarTile.CustomText = "Đang chèn ảnh vào CAD...";
                                 progressBarTile.Invalidate();
                                 InsertGeoRasterImage.InsertImageWithJgw(croppedFile, jgwFile);
-
                                 progressBarTile.CustomText = "Hoàn tất! Đã chèn ảnh vào CAD.";
                                 progressBarTile.Invalidate();
-
-                                MessageBox.Show(
-                                    "Đã tải, ghép, cắt ảnh và chèn vào bản vẽ CAD thành công!\n\n" +
+                                MessageBox.Show("Đã tải, ghép, cắt ảnh và chèn vào bản vẽ CAD thành công!\n\n" +
                                     "Tổng tile: " + results.Count + "\n" +
                                     "Thành công: " + success,
                                     "GOOGLE MAP");
