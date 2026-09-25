@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.37710.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoogleMapPlugin.Acad2007", "GoogleMapPlugin.Acad2007.csproj", "{FAA17593-F9C2-49FB-9F2A-8156ACE3ECA7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoogleMapPlugin.Acad2024", "..\GoogleMapPlugin.Acad2024\GoogleMapPlugin.Acad2024.csproj", "{D9C9EB13-FE12-4E17-A928-668A4DAE923C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{FAA17593-F9C2-49FB-9F2A-8156ACE3ECA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FAA17593-F9C2-49FB-9F2A-8156ACE3ECA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FAA17593-F9C2-49FB-9F2A-8156ACE3ECA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9C9EB13-FE12-4E17-A928-668A4DAE923C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9C9EB13-FE12-4E17-A928-668A4DAE923C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9C9EB13-FE12-4E17-A928-668A4DAE923C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9C9EB13-FE12-4E17-A928-668A4DAE923C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
