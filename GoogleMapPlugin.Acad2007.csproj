@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\GoogleMapPlugin.Acad2024\bin\AutoCad2007\</OutputPath>
+    <OutputPath>F:\Lap trinh\C#\GoogleMapPlugin\Cad2007\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
