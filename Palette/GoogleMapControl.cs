@@ -2,9 +2,8 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using GoogleMapPlugin;//.Palette;
-using GoogleMapPlugin.Cad;
 using GoogleMapPlugin.Data;
+using GoogleMapPlugin.Cad;
 using GoogleMapPlugin.Models;
 using GoogleMapPlugin.Services;
 using System;
@@ -79,8 +78,13 @@ namespace GoogleMapPlugin
         private Button btnDelete;
         private Button btnCheck;
         private Button btnCheck1;
-
+        private Label lblAuthor;
         private ProgressBarWithText progressBarTile;
+
+        private PictureBox picPreview;
+        private Label lblPreview;
+
+        public object Resource1 { get; private set; }
         #endregion
         #region"Hàm khởi tạo các control"
         // ==============================
@@ -93,6 +97,8 @@ namespace GoogleMapPlugin
             cmbKTT.IntegralHeight = false;
             cmbKTT.DropDown += cmbKTT_DropDown;
             LoadKinhTuyenTruc();
+            cmbMapType.SelectedIndexChanged += cmbMapType_SelectedIndexChanged;
+            UpdatePreview();
         }
         #endregion
         #region"Khởi tạo giao diện, thêm các control vào Palette"
@@ -108,13 +114,13 @@ namespace GoogleMapPlugin
             // TITLE
             // =================================
             Label lblTitle = new Label();
-            lblTitle.Text = "GOOGLE MAP DOWNLOAD" + "\nCopyright by Vũ Lê Cường";
-            lblTitle.ForeColor = Color.BlueViolet;
+            lblTitle.Text = "GOOGLE MAP DOWNLOAD";
+            lblTitle.ForeColor = Color.Blue;
             lblTitle.Dock = DockStyle.Top;
             lblTitle.Height = 40;
             lblTitle.TextAlign = ContentAlignment.MiddleCenter;
-            lblTitle.Font = new Font("Arial", 10, FontStyle.Bold);
-            this.Controls.Add(lblTitle);
+            lblTitle.Font = new System.Drawing.Font("Cooper Black", 14, FontStyle.Bold);
+            this.Controls.Add(lblTitle);            
             // =================================
             // PANEL
             // =================================
@@ -122,7 +128,18 @@ namespace GoogleMapPlugin
             panel.Dock = DockStyle.Fill;
             panel.Padding = new Padding(10);
             this.Controls.Add(panel);
-            int y = 50;            
+            int y = 38;
+            //==================================
+            //ADD AUTHOR
+            //==================================
+            lblAuthor = new Label();
+            lblAuthor.Text = "Tác giả: Vũ Lê Cường \nTel: 0983.660.313";
+            lblAuthor.Location = new Point(10, y);
+            lblAuthor.AutoSize = true;
+            lblAuthor.Font = new System.Drawing.Font("Arial", 9, FontStyle.Italic);
+            lblAuthor.ForeColor = Color.Blue;
+            panel.Controls.Add(lblAuthor);
+            y += 35;
             // =================================
             // ĐIỂM 1
             // =================================
@@ -130,7 +147,7 @@ namespace GoogleMapPlugin
             lblPoint1.Text = "Toạ độ điểm 1";
             lblPoint1.Location = new Point(40, y);
             lblPoint1.AutoSize = true;
-            lblPoint1.Font = new Font("Arial", 9, FontStyle.Bold);
+            lblPoint1.Font = new System.Drawing.Font("Arial", 9, FontStyle.Bold);
             panel.Controls.Add(lblPoint1);
             // =================================
             // ĐIỂM 2
@@ -139,9 +156,9 @@ namespace GoogleMapPlugin
             lblPoint2.Text = "Toạ độ điểm 2";
             lblPoint2.Location = new Point(185, y);
             lblPoint2.AutoSize = true;
-            lblPoint2.Font = new Font("Arial", 9, FontStyle.Bold);
+            lblPoint2.Font = new System.Drawing.Font("Arial", 9, FontStyle.Bold);
             panel.Controls.Add(lblPoint2);
-            y += 25;
+            y += 20;
             // X1
             lblX1 = new Label();
             lblX1.Text = "X1:";
@@ -183,7 +200,7 @@ namespace GoogleMapPlugin
             txtY2.Location = new Point(185, y);
             txtY2.Width = 105;// 260;// 170;
             panel.Controls.Add(txtY2);     
-            y += 40;
+            y += 30;
             // BUTTON CHỌN VÙNG BẢN DỒ CẦN TẢI
             btnPick1 = new Button();
             btnPick1.Text = "Chọn vùng";
@@ -264,10 +281,10 @@ namespace GoogleMapPlugin
             btnDownload.Text = "TẢI GOOGLE MAP";
             btnDownload.Location = new Point(10, y);
             btnDownload.Width = 280;
-            btnDownload.Height = 30;
+            btnDownload.Height = 25;
             btnDownload.Click += BtnDownload_Click;
             panel.Controls.Add(btnDownload);
-            y += 30;
+            y += 25;
             // =================================
             // DELETE
             // =================================
@@ -275,9 +292,66 @@ namespace GoogleMapPlugin
             btnDelete.Text = "XÓA ẢNH";
             btnDelete.Location = new Point(10, y);
             btnDelete.Width = 280;
-            btnDelete.Height = 30;
+            btnDelete.Height = 25;
             panel.Controls.Add(btnDelete);
-           
+            y += 30;
+            lblPreview = new Label();
+            lblPreview.Text = "PREVIEW";
+            lblPreview.Font = new System.Drawing.Font("Arial",8,FontStyle.Bold);
+            lblPreview.Location = new Point(10, y);
+            lblPreview.AutoSize = true;
+            panel.Controls.Add(lblPreview);
+            y += 20;
+            // -----------------------------------------------------
+            // PICTURE BOX
+            // -----------------------------------------------------
+            picPreview = new PictureBox();
+            picPreview.Location = new Point(10, y);            
+            picPreview.Width = 280;
+            picPreview.Height = 165;
+            picPreview.BorderStyle = BorderStyle.FixedSingle;
+            picPreview.SizeMode = PictureBoxSizeMode.Zoom;
+            picPreview.BackColor = Color.White;
+            panel.Controls.Add(picPreview);
+        }
+        // =========================================================
+        // MAP TYPE CHANGED
+        // =========================================================
+        private void cmbMapType_SelectedIndexChanged(
+            object sender,
+            EventArgs e)
+        {
+            UpdatePreview();
+        }
+        // =========================================================
+        // UPDATE PREVIEW
+        // =========================================================
+        private void UpdatePreview()
+        {
+            if (cmbMapType.SelectedIndex < 0)
+                return;
+
+            switch (cmbMapType.SelectedIndex)
+            {
+                case 0:
+                    picPreview.Image = global::GoogleMapDownload.Properties.Resources.Satellite;
+                    break;
+
+                case 1:
+                    picPreview.Image = global::GoogleMapDownload.Properties.Resources.Road;
+                    break;
+
+                case 2:
+                    picPreview.Image = global::GoogleMapDownload.Properties.Resources.Hybrid;
+                    break;
+
+                case 3:
+                    picPreview.Image = global::GoogleMapDownload.Properties.Resources.Terrain;
+                    break;
+            }
+
+            //picPreview.SizeMode = PictureBoxSizeMode.Zoom;
+            picPreview.SizeMode = PictureBoxSizeMode.StretchImage;
         }
         #endregion
         private void cmbKTT_DropDown(object sender, EventArgs e)
