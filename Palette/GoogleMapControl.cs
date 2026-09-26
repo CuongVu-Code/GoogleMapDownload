@@ -289,6 +289,7 @@ namespace GoogleMapPlugin
             btnDelete.Location = new Point(10, y);
             btnDelete.Width = 280;
             btnDelete.Height = 25;
+            btnDelete.Click += BtnDelete_Click;
             panel.Controls.Add(btnDelete);
             y += 30;
             lblPreview = new Label();
@@ -493,6 +494,45 @@ namespace GoogleMapPlugin
                             btnDownload.Enabled = true;
                             MessageBox.Show(ex.Message, "Lỗi");
                         }));
+            }
+        }
+        // =========================================================
+        // GỠ TOÀN BỘ ẢNH GOOGLE MAP ĐÃ CHÈN VÀO BẢN VẼ (không xoá file)
+        // =========================================================
+        private void BtnDelete_Click(object sender, EventArgs e)
+        {
+            DialogResult confirm = MessageBox.Show(
+                "Gỡ toàn bộ ảnh Google Map đã chèn vào bản vẽ này?\n\n" +
+                "(Chỉ gỡ liên kết ảnh khỏi bản vẽ, KHÔNG xoá file .jpg/.jgw trên đĩa.)",
+                "XÓA ẢNH",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (confirm != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                int removed = InsertGeoRasterImage.DetachAllGoogleMapImages();
+
+                if (removed == 0)
+                {
+                    MessageBox.Show(
+                        "Không tìm thấy ảnh Google Map nào trong bản vẽ này.",
+                        "XÓA ẢNH");
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Đã gỡ " + removed + " ảnh Google Map khỏi bản vẽ.",
+                        "XÓA ẢNH");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Lỗi XÓA ẢNH");
             }
         }
         private GoogleMapRequest GetRequestFromUI()
