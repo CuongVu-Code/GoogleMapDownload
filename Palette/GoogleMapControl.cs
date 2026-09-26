@@ -1,6 +1,9 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
+using GoogleMapDownload;//.Palette;
 using GoogleMapPlugin.Cad;
 using GoogleMapPlugin.Data;
 using GoogleMapPlugin.Models;
@@ -610,6 +613,67 @@ namespace GoogleMapPlugin
             return outputFile;
         }
         // =========================================================
+        // LẤY ĐƯỜNG DẪN ẢNH/JGW OUTPUT DỰA THEO FILE CAD ĐANG MỞ
+        // (Cùng thư mục, cùng tên file với .dwg đang mở)
+        // =========================================================
+        private void GetCadOutputPaths(out string imagePath, out string jgwPath)
+        {
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+            {
+                throw new Exception("Không có bản vẽ CAD nào đang mở.");
+            }
+            string dwgPath = doc.Name;
+            // Bản vẽ chưa từng lưu: Document.Name không phải đường dẫn thật
+            // (ví dụ "Drawing1.dwg"), không xác định được thư mục hợp lệ.
+            if (!Path.IsPathRooted(dwgPath) ||
+                string.IsNullOrEmpty(Path.GetDirectoryName(dwgPath)) ||
+                !Directory.Exists(Path.GetDirectoryName(dwgPath)))
+            {
+                throw new Exception(
+                    "Bản vẽ CAD hiện tại chưa được lưu.\n\n" +
+                    "Vui lòng lưu bản vẽ (Ctrl+S) trước khi tải ảnh Google Map,\n" +
+                    "để chương trình biết thư mục lưu ảnh + file JGW.");
+            }
+            string dwgFolder = Path.GetDirectoryName(dwgPath);
+            string baseName = Path.GetFileNameWithoutExtension(dwgPath);
+            // -----------------------------------------------------
+            // Gom ảnh/JGW vào thư mục con "GoogleMap" cạnh file CAD,
+            // thay vì để lẫn trực tiếp trong thư mục gốc dự án
+            // (tránh làm rối thư mục chứa file .dwg khi tải nhiều lần).
+            // -----------------------------------------------------
+            string folder = Path.Combine(dwgFolder, "GoogleMap");
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+            // -----------------------------------------------------
+            // Thêm hậu tố thời gian để KHÔNG ghi đè ảnh của lần tải trước.
+            //
+            // Lý do bắt buộc phải làm vậy (không chỉ để gọn gàng):
+            // Mỗi lần chèn ảnh vào CAD sẽ tạo ra MỘT entity RasterImage
+            // RIÊNG, nhưng entity đó chỉ LƯU ĐƯỜNG DẪN tới file ảnh trên
+            // đĩa (không nhúng dữ liệu ảnh vào bản vẽ). Nếu các lần tải
+            // dùng chung 1 tên file, lần tải sau sẽ ghi đè nội dung ảnh
+            // mà các entity CŨ đang tham chiếu -> ảnh cũ trong bản vẽ sẽ
+            // tự động đổi sang ảnh mới ngay khi CAD REGEN/mở lại, gây
+            // sai lệch dữ liệu không mong muốn.
+            // -----------------------------------------------------
+            string timeSuffix = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string candidateBase = baseName + "_" + timeSuffix;
+            // Phòng hờ tải 2 lần trong cùng 1 giây (hiếm nhưng có thể xảy ra):
+            // tự thêm số thứ tự nếu tên vẫn bị trùng.
+            int counter = 1;
+            string finalBase = candidateBase;
+            while (File.Exists(Path.Combine(folder, finalBase + ".jpg")) ||File.Exists(Path.Combine(folder, finalBase + ".jgw")))
+            {
+                finalBase = candidateBase + "_" + counter;
+                counter++;
+            }
+            imagePath = Path.Combine(folder, finalBase + ".jpg");
+            jgwPath = Path.Combine(folder, finalBase + ".jgw");
+        }
+        // =========================================================
         // CẮT ẢNH ĐÚNG VÙNG YÊU CẦU (dùng cho luồng tự động)
         // =========================================================
         private string CropTilesAuto(
@@ -639,34 +703,29 @@ namespace GoogleMapPlugin
             {
                 throw new Exception("Không tìm thấy ảnh Merge:\n" + mergedFile);
             }
+            // Ảnh crop cuối cùng: đặt tên + lưu cùng thư mục với file CAD đang mở
+            string outputFile;
+            string jgwPathUnused;
+            GetCadOutputPaths(out outputFile, out jgwPathUnused);
             GoogleTileCropService cropService = new GoogleTileCropService();
-            string outputFile = @"C:\GoogleMap\google_map_test.jpg";
             cropService.CropImage(mergedFile, outputFile, range, latMin, lonMin, latMax, lonMax, request.Zoom);
             return outputFile;
         }
         // =========================================================
         // TẠO FILE JGW (dùng cho luồng tự động)
         // =========================================================
-        private string CreateJgwAuto(
-            GoogleMapRequest request,
-            string croppedFile,
-            GoogleTileRange range,
-            double latMin,
-            double lonMin,
-            double latMax,
-            double lonMax)
+        private string CreateJgwAuto(GoogleMapRequest request, string croppedFile, GoogleTileRange range, double latMin, double lonMin, double latMax, double lonMax)
         {
-            string jgwFile = @"C:\GoogleMap\google_map_test.jgw";
+            string jgwFile = Path.Combine(Path.GetDirectoryName(croppedFile), Path.GetFileNameWithoutExtension(croppedFile) + ".jgw");
             GoogleWorldFileService worldFileService = new GoogleWorldFileService();
-            string result = worldFileService.CreateJgw(
-                croppedFile, jgwFile, range, latMin, lonMin, latMax, lonMax, request.Zoom, request.KinhTuyenTruc);
+            string result = worldFileService.CreateJgw(croppedFile, jgwFile, range, latMin, lonMin, latMax, lonMax, request.Zoom, request.KinhTuyenTruc);
             string[] lines = File.ReadAllLines(result);
             if (lines.Length != 6)
             {
                 throw new Exception("File JGW không có đúng 6 dòng.");
             }
             return result;
-        }        
+        }
         private void DisableControls()
         {
             txtX1.Enabled = false;

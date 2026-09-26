@@ -63,16 +63,6 @@ namespace GoogleMapDownload.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Hybrid {
-            get {
-                object obj = ResourceManager.GetObject("Hybrid", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap Road {
             get {
                 object obj = ResourceManager.GetObject("Road", resourceCulture);
@@ -86,16 +76,6 @@ namespace GoogleMapDownload.Properties {
         internal static System.Drawing.Bitmap Satellite {
             get {
                 object obj = ResourceManager.GetObject("Satellite", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Terrain {
-            get {
-                object obj = ResourceManager.GetObject("Terrain", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
